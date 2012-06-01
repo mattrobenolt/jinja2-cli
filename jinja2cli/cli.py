@@ -5,9 +5,6 @@ jinja2-cli
 License: BSD, see LICENSE for more details.
 """
 
-from __future__ import absolute_import
-
-
 class InvalidDataFormat(Exception): pass
 class InvalidInputData(Exception): pass
 class MalformedJSON(InvalidInputData): pass
