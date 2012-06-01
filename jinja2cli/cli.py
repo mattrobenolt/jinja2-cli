@@ -5,6 +5,8 @@ jinja2-cli
 License: BSD, see LICENSE for more details.
 """
 
+from jinja2cli import __version__
+
 class InvalidDataFormat(Exception): pass
 class InvalidInputData(Exception): pass
 class MalformedJSON(InvalidInputData): pass
@@ -94,6 +96,7 @@ import os
 import sys
 from optparse import OptionParser
 
+import jinja2
 from jinja2 import Environment, FileSystemLoader
 
 
@@ -119,7 +122,8 @@ def main():
     if default_format not in formats:
         default_format = sorted(formats.keys())[0]
 
-    parser = OptionParser(usage="usage: %prog [options] <input template> <input data>")
+    parser = OptionParser(usage="usage: %prog [options] <input template> <input data>",
+                          version="jinja2-cli v%s\n - Jinja2 v%s" % (__version__, jinja2.__version__))
     parser.add_option('--format', help='Format of input variables: %s' % ', '.join(formats.keys()), dest='format', action='store', default=default_format)
     opts, args = parser.parse_args()
 
