@@ -124,7 +124,8 @@ def main():
 
     parser = OptionParser(usage="usage: %prog [options] <input template> <input data>",
                           version="jinja2-cli v%s\n - Jinja2 v%s" % (__version__, jinja2.__version__))
-    parser.add_option('--format', help='Format of input variables: %s' % ', '.join(formats.keys()), dest='format', action='store', default=default_format)
+    parser.add_option('--format', help='Format of input variables: %s' % ', '.join(formats.keys()),
+                      dest='format', action='store', default=default_format)
     opts, args = parser.parse_args()
 
     if len(args) == 0:
