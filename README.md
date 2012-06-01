@@ -19,11 +19,13 @@ Options:
   -h, --help       show this help message and exit
   --format=FORMAT  Format of input variables: yaml, json, querystring, ini
   ```
-## TODO
- * Make environment variables accessible to templates
- * Pass through m4/gcc-like variables: `jinja2 -Dname=matt`
 
 ## Optional YAML support
 If PyYAML is present, you can use YAML as an input data source.
 
 `$ pip install pyyaml`
+
+## TODO
+ * Make environment variables accessible to templates
+ * Pass through m4/gcc-like variables: `jinja2 -Dname=matt`
+ * Tests!
