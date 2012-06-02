@@ -144,3 +144,4 @@ def main():
         raise InvalidDataFormat(opts.format)
 
     cli(opts, args)
+    sys.exit(0)
