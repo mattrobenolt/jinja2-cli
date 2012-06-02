@@ -132,6 +132,10 @@ def main():
         parser.print_help()
         sys.exit(1)
 
+    if args[0] == 'help':
+        parser.print_help()
+        sys.exit(1)
+
     # Without the second argv, assume they want to read from stdin
     if len(args) == 1:
         args.append('-')
