@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 jinja2-cli
-======
+==========
 
 A CLI interface to jinja2.
 
@@ -15,7 +15,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='jinja2-cli',
-    version='0.1.1-dev',
+    version='0.2.0',
     author='Matt Robenolt',
     author_email='matt@ydekproductions.com',
     url='https://github.com/mattrobenolt/jinja2-cli',
