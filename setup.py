@@ -26,7 +26,6 @@ setup(
     license='BSD',
     install_requires=[
         'jinja2',
-        'simplejson',
     ],
     include_package_data=True,
     entry_points={
