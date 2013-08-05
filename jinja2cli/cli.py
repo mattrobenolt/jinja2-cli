@@ -101,16 +101,23 @@ from jinja2 import Environment, FileSystemLoader
 
 
 def cli(opts, args):
-    if args[1] == '-':
-        data = sys.stdin.read()
+    if len(args) < 2:
+        data = {}
     else:
-        data = open(os.path.join(os.getcwd(), os.path.expanduser(args[1]))).read()
+        if args[1] == '-':
+            data = sys.stdin.read()
+        else:
+            data = open(os.path.join(os.getcwd(), os.path.expanduser(args[1]))).read()
 
-    try:
-        data = formats[opts.format][0](data)
-    except formats[opts.format][1]:
-        raise formats[opts.format][2](u'%s ...' % data[:60])
-        sys.exit(1)
+        try:
+            data = formats[opts.format][0](data)
+        except formats[opts.format][1]:
+            raise formats[opts.format][2](u'%s ...' % data[:60])
+            sys.exit(1)
+
+    for define in opts.data:
+        key, value = define.split('=')
+        data[key] = value
 
     env = Environment(loader=FileSystemLoader(os.getcwd()))
     sys.stdout.write(env.get_template(args[0]).render(data).encode('utf-8'))
@@ -126,6 +133,8 @@ def main():
                           version="jinja2-cli v%s\n - Jinja2 v%s" % (__version__, jinja2.__version__))
     parser.add_option('--format', help='Format of input variables: %s' % ', '.join(formats.keys()),
                       dest='format', action='store', default=default_format)
+    parser.add_option('-D', help='Additional variable (will override other definitions)',
+                      dest='data', action='append', metavar='KEY=VAL')
     opts, args = parser.parse_args()
 
     if len(args) == 0:
@@ -137,8 +146,9 @@ def main():
         sys.exit(1)
 
     # Without the second argv, assume they want to read from stdin
-    if len(args) == 1:
+    if len(args) == 1 and not opts.data:
         args.append('-')
+        opts.data = []
 
     if opts.format not in formats:
         raise InvalidDataFormat(opts.format)
