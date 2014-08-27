@@ -112,10 +112,14 @@ def cli(opts, args):
         raise formats[opts.format][2](u'%s ...' % data[:60])
         sys.exit(1)
 
+    data.update(parse_kv_string(opts.D or []))
+
     env = Environment(loader=FileSystemLoader(os.getcwd()))
     sys.stdout.write(env.get_template(args[0]).render(data).encode('utf-8'))
     sys.exit(0)
 
+def parse_kv_string(pairs):
+    return dict(pair.split('=',1) for pair in pairs)
 
 def main():
     default_format = 'json'
@@ -126,6 +130,7 @@ def main():
                           version="jinja2-cli v%s\n - Jinja2 v%s" % (__version__, jinja2.__version__))
     parser.add_option('--format', help='Format of input variables: %s' % ', '.join(formats.keys()),
                       dest='format', action='store', default=default_format)
+    parser.add_option('-D', action='append', help='Define template variable in the form of key=value', metavar='key=value')
     opts, args = parser.parse_args()
 
     if len(args) == 0:
