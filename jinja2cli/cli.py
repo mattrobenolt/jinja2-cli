@@ -197,6 +197,7 @@ def cli(opts, args):
             ext = 'jinja2.ext.' + ext
         extensions.append(ext)
 
+    data.update(parse_kv_string(opts.D or []))
     output = render(template_path, data, extensions)
 
     if isinstance(output, binary_type):
@@ -204,6 +205,8 @@ def cli(opts, args):
     sys.stdout.write(output)
     sys.exit(0)
 
+def parse_kv_string(pairs):
+    return dict(pair.split('=', 1) for pair in pairs)
 
 def main():
     parser = OptionParser(usage="usage: %prog [options] <input template> <input data>",
@@ -213,6 +216,7 @@ def main():
                       dest='format', action='store', default='auto')
     parser.add_option('-e', '--extension', help='extra jinja2 extensions to load',
                       dest='extensions', action='append', default=['do'])
+    parser.add_option('-D', action='append', help='Define template variable in the form of key=value', metavar='key=value')
     opts, args = parser.parse_args()
 
     # Dedupe list

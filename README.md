@@ -21,6 +21,7 @@ Options:
                         querystring, yaml, yml
   -e EXTENSIONS, --extension=EXTENSIONS
                         extra jinja2 extensions to load
+  -Dname=matt           Define template variable in the form of key=value
   ```
 
 ## Optional YAML support
@@ -35,5 +36,4 @@ If `toml` is present, you can use TOML as an input data source.
 
 ## TODO
  * Variable inheritance and overrides
- * Pass through m4/gcc-like variables: `jinja2 -Dname=matt`
- * Tests!
+  * Tests!
