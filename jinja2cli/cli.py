@@ -7,11 +7,22 @@ License: BSD, see LICENSE for more details.
 
 from jinja2cli import __version__
 
+
 class InvalidDataFormat(Exception): pass
+
+
 class InvalidInputData(Exception): pass
+
+
 class MalformedJSON(InvalidInputData): pass
+
+
 class MalformedINI(InvalidInputData): pass
+
+
 class MalformedYAML(InvalidInputData): pass
+
+
 class MalformedQuerystring(InvalidInputData): pass
 
 
@@ -22,10 +33,12 @@ formats = {}
 # json - simplejson or packaged json as a fallback
 try:
     import simplejson
+
     formats['json'] = (simplejson.loads, simplejson.decoder.JSONDecodeError, MalformedJSON)
 except ImportError:
     try:
         import json
+
         formats['json'] = (json.loads, ValueError, MalformedJSON)
     except ImportError:
         pass
@@ -39,8 +52,10 @@ except ImportError:
     # Python 3
     import configparser as ConfigParser
 
+
 def _parse_ini(data):
     import StringIO
+
     class MyConfigParser(ConfigParser.ConfigParser):
         def as_dict(self):
             d = dict(self._sections)
@@ -48,15 +63,19 @@ def _parse_ini(data):
                 d[k] = dict(self._defaults, **d[k])
                 d[k].pop('__name__', None)
             return d
+
     p = MyConfigParser()
     p.readfp(StringIO.StringIO(data))
     return p.as_dict()
+
+
 formats['ini'] = (_parse_ini, ConfigParser.Error, MalformedINI)
 
 
 # yaml - with PyYAML
 try:
     import yaml
+
     formats['yaml'] = (yaml.load, yaml.YAMLError, MalformedYAML)
 except ImportError:
     pass
@@ -89,8 +108,9 @@ def _parse_qs(data):
         else:
             dict_[k] = v
     return dict_
-formats['querystring'] = (_parse_qs, Exception, MalformedQuerystring)
 
+
+formats['querystring'] = (_parse_qs, Exception, MalformedQuerystring)
 
 import os
 import sys
@@ -100,21 +120,33 @@ import jinja2
 from jinja2 import Environment, FileSystemLoader
 
 
+def format_data(format_, data):
+    return formats[format_][0](data)
+
+
+def render(template_path, data):
+    env = Environment(loader=FileSystemLoader(os.path.dirname(template_path)))
+    output = env.get_template(os.path.basename(template_path)).render(data).encode('utf-8')
+    return output
+
+
 def cli(opts, args):
     if args[1] == '-':
         data = sys.stdin.read()
     else:
         data = open(os.path.join(os.getcwd(), os.path.expanduser(args[1]))).read()
 
+    template_path = os.path.abspath(args[0])
+
     try:
-        data = formats[opts.format][0](data)
+        data = format_data(opts.format, data)
     except formats[opts.format][1]:
         raise formats[opts.format][2](u'%s ...' % data[:60])
         sys.exit(1)
 
-    template_path = os.path.abspath(args[0])
-    env = Environment(loader=FileSystemLoader(os.path.dirname(template_path)))
-    sys.stdout.write(env.get_template(os.path.basename(template_path)).render(data).encode('utf-8'))
+    output = render(template_path, data)
+
+    sys.stdout.write(output)
     sys.exit(0)
 
 
@@ -146,3 +178,7 @@ def main():
 
     cli(opts, args)
     sys.exit(0)
+
+
+if __name__ == '__main__':
+    main()

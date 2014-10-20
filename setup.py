@@ -27,6 +27,10 @@ setup(
     install_requires=[
         'jinja2',
     ],
+    tests_require=[
+        'nose',
+    ],
+    test_suite = 'nose.collector',
     include_package_data=True,
     entry_points={
         'console_scripts': [
