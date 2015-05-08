@@ -125,7 +125,10 @@ def format_data(format_, data):
 
 
 def render(template_path, data):
-    env = Environment(loader=FileSystemLoader(os.path.dirname(template_path)))
+    env = Environment(
+        loader=FileSystemLoader(os.path.dirname(template_path)),
+        extensions=['jinja2.ext.do'],
+    )
     output = env.get_template(os.path.basename(template_path)).render(data).encode('utf-8')
     return output
 
