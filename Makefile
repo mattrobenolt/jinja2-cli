@@ -1,4 +1,8 @@
-publish:
-	python setup.py sdist upload
+publish: clean
+	python setup.py sdist bdist_wheel
+	twine upload dist/*
 
-.PHONY: publish
+clean:
+	rm -rf *.egg-info *.egg dist build
+
+.PHONY: publish clean
