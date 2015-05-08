@@ -76,7 +76,7 @@ formats['ini'] = (_parse_ini, ConfigParser.Error, MalformedINI)
 try:
     import yaml
 
-    formats['yaml'] = (yaml.load, yaml.YAMLError, MalformedYAML)
+    formats['yaml'] = formats['yml'] = (yaml.load, yaml.YAMLError, MalformedYAML)
 except ImportError:
     pass
 
@@ -134,17 +134,26 @@ def render(template_path, data):
 
 
 def cli(opts, args):
+    format = opts.format
     if args[1] == '-':
         data = sys.stdin.read()
+        # We can only assume it's json at this point
+        if format == 'auto':
+            format = 'json'
     else:
-        data = open(os.path.join(os.getcwd(), os.path.expanduser(args[1]))).read()
+        path = os.path.join(os.getcwd(), os.path.expanduser(args[1]))
+        if format == 'auto':
+            ext = os.path.splitext(path)[1][1:]
+            if ext in formats:
+                format = ext
+        data = open(path).read()
 
     template_path = os.path.abspath(args[0])
 
     try:
-        data = format_data(opts.format, data)
-    except formats[opts.format][1]:
-        raise formats[opts.format][2](u'%s ...' % data[:60])
+        data = format_data(format, data)
+    except formats[format][1]:
+        raise formats[format][2](u'%s ...' % data[:60])
         sys.exit(1)
 
     output = render(template_path, data)
@@ -154,14 +163,10 @@ def cli(opts, args):
 
 
 def main():
-    default_format = 'json'
-    if default_format not in formats:
-        default_format = sorted(formats.keys())[0]
-
     parser = OptionParser(usage="usage: %prog [options] <input template> <input data>",
                           version="jinja2-cli v%s\n - Jinja2 v%s" % (__version__, jinja2.__version__))
-    parser.add_option('--format', help='Format of input variables: %s' % ', '.join(formats.keys()),
-                      dest='format', action='store', default=default_format)
+    parser.add_option('--format', help='Format of input variables: %s' % ', '.join(sorted(formats.keys() + ['auto'])),
+                      dest='format', action='store', default='auto')
     opts, args = parser.parse_args()
 
     if len(args) == 0:
@@ -176,7 +181,7 @@ def main():
     if len(args) == 1:
         args.append('-')
 
-    if opts.format not in formats:
+    if opts.format not in formats and opts.format != 'auto':
         raise InvalidDataFormat(opts.format)
 
     cli(opts, args)
