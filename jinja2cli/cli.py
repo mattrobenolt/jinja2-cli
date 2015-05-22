@@ -124,10 +124,10 @@ def format_data(format_, data):
     return formats[format_][0](data)
 
 
-def render(template_path, data):
+def render(template_path, data, extensions):
     env = Environment(
         loader=FileSystemLoader(os.path.dirname(template_path)),
-        extensions=['jinja2.ext.do'],
+        extensions=extensions,
     )
     output = env.get_template(os.path.basename(template_path)).render(data).encode('utf-8')
     return output
@@ -156,7 +156,15 @@ def cli(opts, args):
         raise formats[format][2](u'%s ...' % data[:60])
         sys.exit(1)
 
-    output = render(template_path, data)
+    extensions = []
+    for ext in opts.extensions:
+        # Allow shorthand and assume if it's not a module
+        # path, it's probably trying to use builtin from jinja2
+        if '.' not in ext:
+            ext = 'jinja2.ext.' + ext
+        extensions.append(ext)
+
+    output = render(template_path, data, extensions)
 
     sys.stdout.write(output)
     sys.exit(0)
@@ -165,9 +173,14 @@ def cli(opts, args):
 def main():
     parser = OptionParser(usage="usage: %prog [options] <input template> <input data>",
                           version="jinja2-cli v%s\n - Jinja2 v%s" % (__version__, jinja2.__version__))
-    parser.add_option('--format', help='Format of input variables: %s' % ', '.join(sorted(formats.keys() + ['auto'])),
+    parser.add_option('--format', help='format of input variables: %s' % ', '.join(sorted(formats.keys() + ['auto'])),
                       dest='format', action='store', default='auto')
+    parser.add_option('-e', '--extension', help='extra jinja2 extensions to load',
+                      dest='extensions', action='append', default=['do'])
     opts, args = parser.parse_args()
+
+    # Dedupe list
+    opts.extensions = set(opts.extensions)
 
     if len(args) == 0:
         parser.print_help()
