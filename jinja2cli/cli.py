@@ -137,9 +137,12 @@ def cli(opts, args):
     format = opts.format
     if args[1] == '-':
         data = sys.stdin.read()
-        # We can only assume it's json at this point
         if format == 'auto':
-            format = 'json'
+            # default to yaml first if available since yaml is a superset of json
+            if 'yaml' in formats:
+                format = 'yaml'
+            else:
+                format = 'json'
     else:
         path = os.path.join(os.getcwd(), os.path.expanduser(args[1]))
         if format == 'auto':
