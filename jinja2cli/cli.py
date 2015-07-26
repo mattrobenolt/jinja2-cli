@@ -30,16 +30,16 @@ class MalformedQuerystring(InvalidInputData): pass
 # mapped to the callable/Exception to parse a string into a dict
 formats = {}
 
-# json - simplejson or packaged json as a fallback
+# json - builtin json or simplejson as a fallback
 try:
-    import simplejson
+    import json
 
-    formats['json'] = (simplejson.loads, simplejson.decoder.JSONDecodeError, MalformedJSON)
+    formats['json'] = (json.loads, ValueError, MalformedJSON)
 except ImportError:
     try:
-        import json
+        import simplejson
 
-        formats['json'] = (json.loads, ValueError, MalformedJSON)
+        formats['json'] = (simplejson.loads, simplejson.decoder.JSONDecodeError, MalformedJSON)
     except ImportError:
         pass
 
