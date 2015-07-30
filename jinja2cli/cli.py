@@ -124,7 +124,7 @@ def format_data(format_, data):
     return formats[format_][0](data)
 
 
-def render(template_path, data, extensions):
+def render(template_path, data, extensions=('jinja2.ext.do',)):
     env = Environment(
         loader=FileSystemLoader(os.path.dirname(template_path)),
         extensions=extensions,
