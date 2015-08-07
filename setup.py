@@ -15,7 +15,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='jinja2-cli',
-    version='0.4.1',
+    version='0.4.2',
     author='Matt Robenolt',
     author_email='matt@ydekproductions.com',
     url='https://github.com/mattrobenolt/jinja2-cli',
