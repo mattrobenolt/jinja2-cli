@@ -149,6 +149,10 @@ def cli(opts, args):
             ext = os.path.splitext(path)[1][1:]
             if ext in formats:
                 format = ext
+            else:
+                if ext in ('yml', 'yaml'):
+                    raise InvalidDataFormat('%s: install pyyaml to fix' % ext)
+                raise InvalidDataFormat(ext)
         data = open(path).read()
 
     template_path = os.path.abspath(args[0])
@@ -198,6 +202,8 @@ def main():
         args.append('-')
 
     if opts.format not in formats and opts.format != 'auto':
+        if opts.format in ('yml', 'yaml'):
+            raise InvalidDataFormat('%s: install pyyaml to fix' % opts.format)
         raise InvalidDataFormat(opts.format)
 
     cli(opts, args)
