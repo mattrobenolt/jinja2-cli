@@ -130,6 +130,10 @@ def render(template_path, data, extensions):
         extensions=extensions,
         keep_trailing_newline=True,
     )
+
+    # Add environ global
+    env.globals['environ'] = os.environ.get
+
     output = env.get_template(os.path.basename(template_path)).render(data).encode('utf-8')
     return output
 
