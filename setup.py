@@ -31,9 +31,8 @@ setup(
         'yaml': install_requires + ['pyyaml'],
     },
     tests_require=[
-        'nose',
+        'pytest',
     ],
-    test_suite='nose.collector',
     include_package_data=True,
     entry_points={
         'console_scripts': [

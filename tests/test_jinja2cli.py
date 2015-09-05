@@ -5,16 +5,16 @@ from jinja2cli import cli
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
 
-def relative_path_test():
+def test_relative_path():
     path = "./files/template.j2"
 
-    output = cli.render(path, {"title": "Test"})
+    output = cli.render(path, {"title": "Test"}, [])
     assert output == "Test"
 
 
-def absolute_path_test():
+def test_absolute_path():
     absolute_base_path = os.path.dirname(os.path.realpath(__file__))
     path = os.path.join(absolute_base_path, "files", "template.j2")
 
-    output = cli.render(path, {"title": "Test"})
+    output = cli.render(path, {"title": "Test"}, [])
     assert output == "Test"
