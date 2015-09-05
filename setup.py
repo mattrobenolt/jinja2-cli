@@ -13,6 +13,8 @@ jinja2-cli
 
 from setuptools import setup, find_packages
 
+install_requires = ['jinja2']
+
 setup(
     name='jinja2-cli',
     version='0.4.3',
@@ -24,9 +26,10 @@ setup(
     packages=find_packages(),
     zip_safe=False,
     license='BSD',
-    install_requires=[
-        'jinja2',
-    ],
+    install_requires=install_requires,
+    extras_require={
+        'yaml': install_requires + ['pyyaml'],
+    },
     tests_require=[
         'nose',
     ],
