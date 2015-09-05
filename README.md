@@ -30,6 +30,5 @@ If PyYAML is present, you can use YAML as an input data source.
 
 ## TODO
  * Variable inheritance and overrides
- * Make environment variables accessible to templates
  * Pass through m4/gcc-like variables: `jinja2 -Dname=matt`
  * Tests!
