@@ -24,9 +24,14 @@ Options:
   ```
 
 ## Optional YAML support
-If PyYAML is present, you can use YAML as an input data source.
+If `PyYAML` is present, you can use YAML as an input data source.
 
 `$ pip install pyyaml`
+
+## Optional TOML support
+If `toml` is present, you can use TOML as an input data source.
+
+`$ pip install toml`
 
 ## TODO
  * Variable inheritance and overrides

@@ -29,6 +29,7 @@ setup(
     install_requires=install_requires,
     extras_require={
         'yaml': install_requires + ['pyyaml'],
+        'toml': install_requires + ['toml'],
     },
     tests_require=[
         'pytest',
