@@ -26,6 +26,9 @@ class MalformedYAML(InvalidInputData): pass
 class MalformedQuerystring(InvalidInputData): pass
 
 
+class MalformedToml(InvalidDataFormat): pass
+
+
 # Global list of available format parsers on your system
 # mapped to the callable/Exception to parse a string into a dict
 formats = {}
@@ -111,6 +114,15 @@ def _parse_qs(data):
 
 
 formats['querystring'] = (_parse_qs, Exception, MalformedQuerystring)
+
+
+# toml (https://github.com/toml-lang/toml/)
+try:
+    import toml
+
+    formats['toml'] = (toml.loads, Exception, MalformedToml)
+except ImportError:
+    pass
 
 import os
 import sys
