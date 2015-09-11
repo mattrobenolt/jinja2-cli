@@ -5,7 +5,16 @@ jinja2-cli
 License: BSD, see LICENSE for more details.
 """
 
+import sys
 from jinja2cli import __version__
+
+
+PY3 = sys.version_info[0] == 3
+
+if PY3:
+    binary_type = bytes
+else:
+    binary_type = str
 
 
 class InvalidDataFormat(Exception): pass
@@ -190,6 +199,8 @@ def cli(opts, args):
 
     output = render(template_path, data, extensions)
 
+    if isinstance(output, binary_type):
+        output = output.decode('utf-8')
     sys.stdout.write(output)
     sys.exit(0)
 
@@ -197,7 +208,8 @@ def cli(opts, args):
 def main():
     parser = OptionParser(usage="usage: %prog [options] <input template> <input data>",
                           version="jinja2-cli v%s\n - Jinja2 v%s" % (__version__, jinja2.__version__))
-    parser.add_option('--format', help='format of input variables: %s' % ', '.join(sorted(formats.keys() + ['auto'])),
+    parser.add_option('--format',
+                      help='format of input variables: %s' % ', '.join(sorted(list(formats.keys()) + ['auto'])),
                       dest='format', action='store', default='auto')
     parser.add_option('-e', '--extension', help='extra jinja2 extensions to load',
                       dest='extensions', action='append', default=['do'])
