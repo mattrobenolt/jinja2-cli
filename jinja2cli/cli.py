@@ -17,25 +17,32 @@ else:
     binary_type = str
 
 
-class InvalidDataFormat(Exception): pass
+class InvalidDataFormat(Exception):
+    pass
 
 
-class InvalidInputData(Exception): pass
+class InvalidInputData(Exception):
+    pass
 
 
-class MalformedJSON(InvalidInputData): pass
+class MalformedJSON(InvalidInputData):
+    pass
 
 
-class MalformedINI(InvalidInputData): pass
+class MalformedINI(InvalidInputData):
+    pass
 
 
-class MalformedYAML(InvalidInputData): pass
+class MalformedYAML(InvalidInputData):
+    pass
 
 
-class MalformedQuerystring(InvalidInputData): pass
+class MalformedQuerystring(InvalidInputData):
+    pass
 
 
-class MalformedToml(InvalidDataFormat): pass
+class MalformedToml(InvalidDataFormat):
+    pass
 
 
 # Global list of available format parsers on your system
@@ -205,8 +212,10 @@ def cli(opts, args):
     sys.stdout.write(output)
     sys.exit(0)
 
+
 def parse_kv_string(pairs):
     return dict(pair.split('=', 1) for pair in pairs)
+
 
 def main():
     parser = OptionParser(usage="usage: %prog [options] <input template> <input data>",
