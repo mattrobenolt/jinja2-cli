@@ -21,8 +21,8 @@ Options:
                         querystring, yaml, yml
   -e EXTENSIONS, --extension=EXTENSIONS
                         extra jinja2 extensions to load
-  -Dname=matt           Define template variable in the form of key=value
-  ```
+  -D key=value          Define template variable in the form of key=value
+```
 
 ## Optional YAML support
 If `PyYAML` is present, you can use YAML as an input data source.
