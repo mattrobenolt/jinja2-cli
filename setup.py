@@ -14,6 +14,7 @@ jinja2-cli
 from setuptools import setup, find_packages
 
 install_requires = ['jinja2']
+tests_requires = ['pytest', 'flake8']
 
 setup(
     name='jinja2-cli',
@@ -30,11 +31,9 @@ setup(
     extras_require={
         'yaml': install_requires + ['pyyaml'],
         'toml': install_requires + ['toml'],
+        'tests': install_requires + tests_requires,
     },
-    tests_require=[
-        'pytest',
-        'flake8',
-    ],
+    tests_require=tests_requires,
     include_package_data=True,
     entry_points={
         'console_scripts': [

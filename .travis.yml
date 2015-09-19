@@ -7,9 +7,7 @@ python:
   - '3.4'
   - 'pypy'
 
-install:
-  - pip install -e .[yaml,toml]
-  - pip install flake8
+install: pip install -e .[yaml,toml,tests]
 
 script:
   - py.test -v
