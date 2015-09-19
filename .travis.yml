@@ -7,5 +7,10 @@ python:
   - '3.4'
   - 'pypy'
 
-install: pip install -e .[yaml]
-script: py.test -v
+install:
+  - pip install -e .[yaml,toml]
+  - pip install flake8
+
+script:
+  - py.test -v
+  - flake8 jinja2cli tests

@@ -33,6 +33,7 @@ setup(
     },
     tests_require=[
         'pytest',
+        'flake8',
     ],
     include_package_data=True,
     entry_points={

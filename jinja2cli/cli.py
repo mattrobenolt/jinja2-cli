@@ -58,7 +58,11 @@ except ImportError:
     try:
         import simplejson
 
-        formats['json'] = (simplejson.loads, simplejson.decoder.JSONDecodeError, MalformedJSON)
+        formats['json'] = (
+            simplejson.loads,
+            simplejson.decoder.JSONDecodeError,
+            MalformedJSON,
+        )
     except ImportError:
         pass
 
@@ -95,7 +99,11 @@ formats['ini'] = (_parse_ini, ConfigParser.Error, MalformedINI)
 try:
     import yaml
 
-    formats['yaml'] = formats['yml'] = (yaml.load, yaml.YAMLError, MalformedYAML)
+    formats['yaml'] = formats['yml'] = (
+        yaml.load,
+        yaml.YAMLError,
+        MalformedYAML,
+    )
 except ImportError:
     pass
 
@@ -162,8 +170,8 @@ def render(template_path, data, extensions):
     # Add environ global
     env.globals['environ'] = os.environ.get
 
-    output = env.get_template(os.path.basename(template_path)).render(data).encode('utf-8')
-    return output
+    output = env.get_template(os.path.basename(template_path)).render(data)
+    return output.encode('utf-8')
 
 
 def cli(opts, args):
@@ -171,7 +179,8 @@ def cli(opts, args):
     if args[1] == '-':
         data = sys.stdin.read()
         if format == 'auto':
-            # default to yaml first if available since yaml is a superset of json
+            # default to yaml first if available since yaml
+            # is a superset of json
             if 'yaml' in formats:
                 format = 'yaml'
             else:
@@ -204,7 +213,6 @@ def cli(opts, args):
             ext = 'jinja2.ext.' + ext
         extensions.append(ext)
 
-
     data.update(parse_kv_string(opts.D or []))
 
     # Use only a specific section if needed
@@ -228,17 +236,32 @@ def parse_kv_string(pairs):
     return dict(pair.split('=', 1) for pair in pairs)
 
 
+def get_formats():
+    return sorted(list(formats.keys())) + ['auto']
+
+
 def main():
-    parser = OptionParser(usage="usage: %prog [options] <input template> <input data>",
-                          version="jinja2-cli v%s\n - Jinja2 v%s" % (__version__, jinja2.__version__))
-    parser.add_option('--format',
-                      help='format of input variables: %s' % ', '.join(sorted(list(formats.keys()) + ['auto'])),
-                      dest='format', action='store', default='auto')
-    parser.add_option('-e', '--extension', help='extra jinja2 extensions to load',
-                      dest='extensions', action='append', default=['do'])
-    parser.add_option('-D', action='append', help='Define template variable in the form of key=value', metavar='key=value')
-    parser.add_option('-s', '--section', help='Use only this section from the configuration',
-                      dest='section', action='store')
+    parser = OptionParser(
+        usage="usage: %prog [options] <input template> <input data>",
+        version="jinja2-cli v%s\n - Jinja2 v%s" % (
+            __version__, jinja2.__version__),
+    )
+    parser.add_option(
+        '--format',
+        help='format of input variables: %s' % ', '.join(get_formats()),
+        dest='format', action='store', default='auto')
+    parser.add_option(
+        '-e', '--extension',
+        help='extra jinja2 extensions to load',
+        dest='extensions', action='append', default=['do'])
+    parser.add_option(
+        '-D',
+        help='Define template variable in the form of key=value',
+        action='append', metavar='key=value')
+    parser.add_option(
+        '-s', '--section',
+        help='Use only this section from the configuration',
+        dest='section', action='store')
     opts, args = parser.parse_args()
 
     # Dedupe list
