@@ -204,7 +204,18 @@ def cli(opts, args):
             ext = 'jinja2.ext.' + ext
         extensions.append(ext)
 
+
     data.update(parse_kv_string(opts.D or []))
+
+    # Use only a specific section if needed
+    if opts.section:
+        section = opts.section
+        if section in data:
+            data = data[section]
+        else:
+            sys.stderr.write('ERROR: unknown section. Exiting.')
+            sys.exit(1)
+
     output = render(template_path, data, extensions)
 
     if isinstance(output, binary_type):
@@ -226,6 +237,8 @@ def main():
     parser.add_option('-e', '--extension', help='extra jinja2 extensions to load',
                       dest='extensions', action='append', default=['do'])
     parser.add_option('-D', action='append', help='Define template variable in the form of key=value', metavar='key=value')
+    parser.add_option('-s', '--section', help='Use only this section from the configuration',
+                      dest='section', action='store')
     opts, args = parser.parse_args()
 
     # Dedupe list
