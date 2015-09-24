@@ -45,119 +45,115 @@ class MalformedToml(InvalidDataFormat):
     pass
 
 
-# Global list of available format parsers on your system
-# mapped to the callable/Exception to parse a string into a dict
-formats = {}
-
-# json - builtin json or simplejson as a fallback
-try:
-    import json
-
-    formats['json'] = (json.loads, ValueError, MalformedJSON)
-except ImportError:
+def get_format(fmt):
     try:
-        import simplejson
-
-        formats['json'] = (
-            simplejson.loads,
-            simplejson.decoder.JSONDecodeError,
-            MalformedJSON,
-        )
+        return formats[fmt]()
     except ImportError:
-        pass
+        raise InvalidDataFormat(fmt)
 
 
-# ini - Nobody likes you.
-try:
-    # Python 2
-    import ConfigParser
-except ImportError:
-    # Python 3
-    import configparser as ConfigParser
+def get_available_formats():
+    for fmt in formats.keys():
+        try:
+            get_format(fmt)
+            yield fmt
+        except InvalidDataFormat:
+            pass
+    yield 'auto'
 
 
-def _parse_ini(data):
-    import StringIO
-
-    class MyConfigParser(ConfigParser.ConfigParser):
-        def as_dict(self):
-            d = dict(self._sections)
-            for k in d:
-                d[k] = dict(self._defaults, **d[k])
-                d[k].pop('__name__', None)
-            return d
-
-    p = MyConfigParser()
-    p.readfp(StringIO.StringIO(data))
-    return p.as_dict()
+def _load_json():
+    try:
+        import json
+        return json.loads, ValueError, MalformedJSON
+    except ImportError:
+        import simplejson
+        return simplejson.loads, simplejson.decoder.JSONDecodeError, MalformedJSON
 
 
-formats['ini'] = (_parse_ini, ConfigParser.Error, MalformedINI)
+def _load_ini():
+    try:
+        import ConfigParser
+    except ImportError:
+        import configparser as ConfigParser
+
+    def _parse_ini(data):
+        import StringIO
+
+        class MyConfigParser(ConfigParser.ConfigParser):
+            def as_dict(self):
+                d = dict(self._sections)
+                for k in d:
+                    d[k] = dict(self._defaults, **d[k])
+                    d[k].pop('__name__', None)
+                return d
+
+        p = MyConfigParser()
+        p.readfp(StringIO.StringIO(data))
+        return p.as_dict()
+
+    return _parse_ini, ConfigParser.Error, MalformedINI
 
 
-# yaml - with PyYAML
-try:
+def _load_yaml():
     import yaml
-
-    formats['yaml'] = formats['yml'] = (
-        yaml.load,
-        yaml.YAMLError,
-        MalformedYAML,
-    )
-except ImportError:
-    pass
+    return yaml.load, yaml.YAMLError, MalformedYAML
 
 
-# querystring - querystring parsing
-def _parse_qs(data):
-    """ Extend urlparse to allow objects in dot syntax.
-
-    >>> _parse_qs('user.first_name=Matt&user.last_name=Robenolt')
-    {'user': {'first_name': 'Matt', 'last_name': 'Robenolt'}}
-    """
+def _load_querystring():
     try:
         import urlparse
     except ImportError:
         import urllib.parse as urlparse
-    dict_ = {}
-    for k, v in urlparse.parse_qs(data).items():
-        v = map(lambda x: x.strip(), v)
-        v = v[0] if len(v) == 1 else v
-        if '.' in k:
-            pieces = k.split('.')
-            cur = dict_
-            for idx, piece in enumerate(pieces):
-                if piece not in cur:
-                    cur[piece] = {}
-                if idx == len(pieces) - 1:
-                    cur[piece] = v
-                cur = cur[piece]
-        else:
-            dict_[k] = v
-    return dict_
+
+    def _parse_qs(data):
+        """ Extend urlparse to allow objects in dot syntax.
+
+        >>> _parse_qs('user.first_name=Matt&user.last_name=Robenolt')
+        {'user': {'first_name': 'Matt', 'last_name': 'Robenolt'}}
+        """
+        dict_ = {}
+        for k, v in urlparse.parse_qs(data).items():
+            v = map(lambda x: x.strip(), v)
+            v = v[0] if len(v) == 1 else v
+            if '.' in k:
+                pieces = k.split('.')
+                cur = dict_
+                for idx, piece in enumerate(pieces):
+                    if piece not in cur:
+                        cur[piece] = {}
+                    if idx == len(pieces) - 1:
+                        cur[piece] = v
+                    cur = cur[piece]
+            else:
+                dict_[k] = v
+        return dict_
+    return _parse_qs, Exception, MalformedQuerystring
 
 
-formats['querystring'] = (_parse_qs, Exception, MalformedQuerystring)
-
-
-# toml (https://github.com/toml-lang/toml/)
-try:
+def _load_toml():
     import toml
+    return toml.loads, Exception, MalformedToml
 
-    formats['toml'] = (toml.loads, Exception, MalformedToml)
-except ImportError:
-    pass
+
+# Global list of available format parsers on your system
+# mapped to the callable/Exception to parse a string into a dict
+formats = {
+    'json': _load_json,
+    'ini': _load_ini,
+    'yaml': _load_yaml,
+    'yml': _load_yaml,
+    'querystring': _load_querystring,
+    'toml': _load_toml,
+}
+
 
 import os
 import sys
-from optparse import OptionParser
+from optparse import OptionParser, Option
 
 import jinja2
 from jinja2 import Environment, FileSystemLoader
-
-
-def format_data(format_, data):
-    return formats[format_][0](data) or {}
 
 
 def render(template_path, data, extensions, strict=False):
@@ -210,10 +206,14 @@ def cli(opts, args):
 
     template_path = os.path.abspath(args[0])
 
-    try:
-        data = format_data(format, data)
-    except formats[format][1]:
-        raise formats[format][2](u'%s ...' % data[:60])
+    if data:
+        fn, except_exc, raise_exc = get_format(format)
+        try:
+            data = fn(data) or {}
+        except except_exc:
+            raise raise_exc(u'%s ...' % data[:60])
+    else:
+        data = {}
 
     extensions = []
     for ext in opts.extensions:
@@ -246,19 +246,33 @@ def parse_kv_string(pairs):
     return dict(pair.split('=', 1) for pair in pairs)
 
 
-def get_formats():
-    return sorted(list(formats.keys())) + ['auto']
+class LazyHelpOption(Option):
+    "An Option class that resolves help from a callable"
+    def __setattr__(self, attr, value):
+        if attr == 'help':
+            attr = '_help'
+        self.__dict__[attr] = value
+
+    @property
+    def help(self):
+        h = self._help
+        if callable(h):
+            h = h()
+        # Cache on the class to get rid of the @property
+        self.help = h
+        return h
 
 
 def main():
     parser = OptionParser(
+        option_class=LazyHelpOption,
         usage="usage: %prog [options] <input template> <input data>",
         version="jinja2-cli v%s\n - Jinja2 v%s" % (
             __version__, jinja2.__version__),
     )
     parser.add_option(
         '--format',
-        help='format of input variables: %s' % ', '.join(get_formats()),
+        help=lambda: 'format of input variables: %s' % ', '.join(get_available_formats()),
         dest='format', action='store', default='auto')
     parser.add_option(
         '-e', '--extension',
