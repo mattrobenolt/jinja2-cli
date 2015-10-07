@@ -37,6 +37,10 @@ class MalformedYAML(InvalidInputData):
     pass
 
 
+class MalformedXML(InvalidInputData):
+    pass
+
+
 class MalformedQuerystring(InvalidInputData):
     pass
 
@@ -107,6 +111,18 @@ try:
 except ImportError:
     pass
 
+# xml - with xmltodict
+try:
+    import xmltodict
+    import xml
+
+    formats['xml'] = (
+        xmltodict.parse,
+        xml.parsers.expat.ExpatError,
+        MalformedXML,
+    )
+except ImportError:
+    pass
 
 # querystring - querystring parsing
 def _parse_qs(data):
@@ -194,6 +210,8 @@ def cli(opts, args):
             else:
                 if ext in ('yml', 'yaml'):
                     raise InvalidDataFormat('%s: install pyyaml to fix' % ext)
+                if ext in ('xml'):
+                    raise InvalidDataFormat('%s: install xmltodict to fix' % ext)
                 raise InvalidDataFormat(ext)
         data = open(path).read()
 
@@ -282,6 +300,8 @@ def main():
     if opts.format not in formats and opts.format != 'auto':
         if opts.format in ('yml', 'yaml'):
             raise InvalidDataFormat('%s: install pyyaml to fix' % opts.format)
+        if opts.format in ('xml'):
+            raise InvalidDataFormat('%s: install xmltodict to fix' % opts.format)
         raise InvalidDataFormat(opts.format)
 
     cli(opts, args)
