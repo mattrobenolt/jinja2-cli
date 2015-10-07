@@ -124,6 +124,7 @@ try:
 except ImportError:
     pass
 
+
 # querystring - querystring parsing
 def _parse_qs(data):
     """ Extend urlparse to allow objects in dot syntax.
@@ -211,7 +212,7 @@ def cli(opts, args):
                 if ext in ('yml', 'yaml'):
                     raise InvalidDataFormat('%s: install pyyaml to fix' % ext)
                 if ext in ('xml'):
-                    raise InvalidDataFormat('%s: install xmltodict to fix' % ext)
+                    raise InvalidDataFormat('%s: install xmltodict' % ext)
                 raise InvalidDataFormat(ext)
         data = open(path).read()
 
@@ -301,7 +302,7 @@ def main():
         if opts.format in ('yml', 'yaml'):
             raise InvalidDataFormat('%s: install pyyaml to fix' % opts.format)
         if opts.format in ('xml'):
-            raise InvalidDataFormat('%s: install xmltodict to fix' % opts.format)
+            raise InvalidDataFormat('%s: install xmltodict' % opts.format)
         raise InvalidDataFormat(opts.format)
 
     cli(opts, args)
