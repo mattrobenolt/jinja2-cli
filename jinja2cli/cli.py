@@ -211,7 +211,7 @@ def cli(opts, args):
             else:
                 if ext in ('yml', 'yaml'):
                     raise InvalidDataFormat('%s: install pyyaml to fix' % ext)
-                if ext in ('xml'):
+                if ext == 'xml':
                     raise InvalidDataFormat('%s: install xmltodict' % ext)
                 raise InvalidDataFormat(ext)
         data = open(path).read()
@@ -301,7 +301,7 @@ def main():
     if opts.format not in formats and opts.format != 'auto':
         if opts.format in ('yml', 'yaml'):
             raise InvalidDataFormat('%s: install pyyaml to fix' % opts.format)
-        if opts.format in ('xml'):
+        if opts.format == 'xml':
             raise InvalidDataFormat('%s: install xmltodict' % opts.format)
         raise InvalidDataFormat(opts.format)
 
