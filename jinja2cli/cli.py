@@ -160,12 +160,15 @@ def format_data(format_, data):
     return formats[format_][0](data)
 
 
-def render(template_path, data, extensions):
+def render(template_path, data, extensions, strict=False):
     env = Environment(
         loader=FileSystemLoader(os.path.dirname(template_path)),
         extensions=extensions,
         keep_trailing_newline=True,
     )
+    if strict:
+        from jinja2 import StrictUndefined
+        env.undefined = StrictUndefined
 
     # Add environ global
     env.globals['environ'] = os.environ.get
@@ -224,7 +227,7 @@ def cli(opts, args):
             sys.stderr.write('ERROR: unknown section. Exiting.')
             sys.exit(1)
 
-    output = render(template_path, data, extensions)
+    output = render(template_path, data, extensions, opts.strict)
 
     if isinstance(output, binary_type):
         output = output.decode('utf-8')
@@ -262,6 +265,10 @@ def main():
         '-s', '--section',
         help='Use only this section from the configuration',
         dest='section', action='store')
+    parser.add_option(
+        '--strict',
+        help='Disallow undefined variables to be used within the template',
+        dest='strict', action='store_true')
     opts, args = parser.parse_args()
 
     # Dedupe list
