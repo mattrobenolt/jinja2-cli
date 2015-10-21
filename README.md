@@ -22,8 +22,11 @@ Options:
   -e EXTENSIONS, --extension=EXTENSIONS
                         extra jinja2 extensions to load
   -D key=value          Define template variable in the form of key=value
-  -s, --section         Use only this section from the configuration
-  ```
+  -s SECTION, --section=SECTION
+                        Use only this section from the configuration
+  --strict              Disallow undefined variables to be used within the
+                        template
+```
 
 ## Optional YAML support
 If `PyYAML` is present, you can use YAML as an input data source.
