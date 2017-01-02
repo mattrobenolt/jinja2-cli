@@ -33,6 +33,11 @@ If `PyYAML` is present, you can use YAML as an input data source.
 
 `$ pip install pyyaml`
 
+## Optional XML support
+If `xmltodict` is present, you can use XML as an input data source.
+
+`$ pip install xmltodict`
+
 ## Optional TOML support
 If `toml` is present, you can use TOML as an input data source.
 
