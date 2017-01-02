@@ -274,7 +274,9 @@ def main():
     )
     parser.add_option(
         '--format',
-        help=lambda: 'format of input variables: %s' % ', '.join(get_available_formats()),
+        help=lambda: 'format of input variables: %s' % ', '.join(
+            sorted(list(get_available_formats()))
+        ),
         dest='format', action='store', default='auto')
     parser.add_option(
         '-e', '--extension',
