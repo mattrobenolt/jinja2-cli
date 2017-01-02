@@ -202,7 +202,9 @@ def cli(opts, args):
                 if ext in ('yml', 'yaml'):
                     raise InvalidDataFormat('%s: install pyyaml to fix' % ext)
                 raise InvalidDataFormat(ext)
-        data = open(path).read()
+
+        with open(path) as fp:
+            data = fp.read()
 
     template_path = os.path.abspath(args[0])
 
