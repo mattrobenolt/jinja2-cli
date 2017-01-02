@@ -157,7 +157,7 @@ from jinja2 import Environment, FileSystemLoader
 
 
 def format_data(format_, data):
-    return formats[format_][0](data)
+    return formats[format_][0](data) or {}
 
 
 def render(template_path, data, extensions, strict=False):
@@ -177,10 +177,18 @@ def render(template_path, data, extensions, strict=False):
     return output.encode('utf-8')
 
 
+def is_fd_alive(fd):
+    import select
+    return bool(select.select([fd], [], [], 0)[0])
+
+
 def cli(opts, args):
     format = opts.format
     if args[1] == '-':
-        data = sys.stdin.read()
+        if is_fd_alive(sys.stdin):
+            data = sys.stdin.read()
+        else:
+            data = ''
         if format == 'auto':
             # default to yaml first if available since yaml
             # is a superset of json
@@ -206,7 +214,6 @@ def cli(opts, args):
         data = format_data(format, data)
     except formats[format][1]:
         raise formats[format][2](u'%s ...' % data[:60])
-        sys.exit(1)
 
     extensions = []
     for ext in opts.extensions:
