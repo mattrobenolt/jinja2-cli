@@ -31,12 +31,17 @@ Options:
 ## Optional YAML support
 If `PyYAML` is present, you can use YAML as an input data source.
 
-`$ pip install pyyaml`
+`$ pip install jinja2-cli[yaml]`
 
 ## Optional TOML support
 If `toml` is present, you can use TOML as an input data source.
 
-`$ pip install toml`
+`$ pip install jinja2-cli[toml]`
+
+## Optional XML support
+If `xmltodict` is present, you can use XML as an input data source.
+
+`$ pip install jinja2-cli[xml]`
 
 ## TODO
  * Variable inheritance and overrides

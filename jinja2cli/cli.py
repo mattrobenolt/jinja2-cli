@@ -45,6 +45,10 @@ class MalformedToml(InvalidDataFormat):
     pass
 
 
+class MalformedXML(InvalidDataFormat):
+    pass
+
+
 def get_format(fmt):
     try:
         return formats[fmt]()
@@ -136,6 +140,12 @@ def _load_toml():
     return toml.loads, Exception, MalformedToml
 
 
+def _load_xml():
+    import xml
+    import xmltodict
+    return xmltodict.parse, xml.parsers.expat.ExpatError, MalformedXML
+
+
 # Global list of available format parsers on your system
 # mapped to the callable/Exception to parse a string into a dict
 formats = {
@@ -145,6 +155,7 @@ formats = {
     'yml': _load_yaml,
     'querystring': _load_querystring,
     'toml': _load_toml,
+    'xml': _load_xml,
 }
 
 
@@ -199,8 +210,6 @@ def cli(opts, args):
             if ext in formats:
                 format = ext
             else:
-                if ext in ('yml', 'yaml'):
-                    raise InvalidDataFormat('%s: install pyyaml to fix' % ext)
                 raise InvalidDataFormat(ext)
 
         with open(path) as fp:
@@ -209,7 +218,16 @@ def cli(opts, args):
     template_path = os.path.abspath(args[0])
 
     if data:
-        fn, except_exc, raise_exc = get_format(format)
+        try:
+            fn, except_exc, raise_exc = get_format(format)
+        except InvalidDataFormat:
+            if format in ('yml', 'yaml'):
+                raise InvalidDataFormat('%s: install pyyaml to fix' % format)
+            if format == 'toml':
+                raise InvalidDataFormat('toml: install toml to fix')
+            if format == 'xml':
+                raise InvalidDataFormat('xml: install xmltodict to fix')
+            raise
         try:
             data = fn(data) or {}
         except except_exc:
@@ -312,8 +330,6 @@ def main():
         args.append('-')
 
     if opts.format not in formats and opts.format != 'auto':
-        if opts.format in ('yml', 'yaml'):
-            raise InvalidDataFormat('%s: install pyyaml to fix' % opts.format)
         raise InvalidDataFormat(opts.format)
 
     cli(opts, args)
