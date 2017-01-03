@@ -252,14 +252,14 @@ def cli(opts, args):
             data = data[section]
         else:
             sys.stderr.write('ERROR: unknown section. Exiting.')
-            sys.exit(1)
+            return 1
 
     output = render(template_path, data, extensions, opts.strict)
 
     if isinstance(output, binary_type):
         output = output.decode('utf-8')
     sys.stdout.write(output)
-    sys.exit(0)
+    return 0
 
 
 def parse_kv_string(pairs):
@@ -332,8 +332,7 @@ def main():
     if opts.format not in formats and opts.format != 'auto':
         raise InvalidDataFormat(opts.format)
 
-    cli(opts, args)
-    sys.exit(0)
+    sys.exit(cli(opts, args))
 
 
 if __name__ == '__main__':
