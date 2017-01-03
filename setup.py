@@ -31,6 +31,7 @@ setup(
     extras_require={
         'yaml': install_requires + ['pyyaml'],
         'toml': install_requires + ['toml'],
+        'xml': install_requires + ['xmltodict'],
         'tests': install_requires + tests_requires,
     },
     tests_require=tests_requires,
