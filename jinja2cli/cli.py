@@ -178,7 +178,7 @@ def render(template_path, data, extensions, strict=False):
         env.undefined = StrictUndefined
 
     # Add environ global
-    env.globals['environ'] = os.environ.get
+    env.globals['environ'] = dict(os.environ)
 
     output = env.get_template(os.path.basename(template_path)).render(data)
     return output.encode('utf-8')
