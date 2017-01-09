@@ -299,7 +299,7 @@ def main():
     parser.add_option(
         '-e', '--extension',
         help='extra jinja2 extensions to load',
-        dest='extensions', action='append', default=['do'])
+        dest='extensions', action='append', default=['do', 'with_', 'autoescape', 'loopcontrols'])
     parser.add_option(
         '-D',
         help='Define template variable in the form of key=value',
