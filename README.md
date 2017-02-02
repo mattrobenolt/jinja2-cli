@@ -26,6 +26,7 @@ Options:
                         Use only this section from the configuration
   --strict              Disallow undefined variables to be used within the
                         template
+  --recurse             Recursively replace variables
 ```
 
 ## Optional YAML support
