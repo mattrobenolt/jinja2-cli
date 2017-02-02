@@ -1,0 +1,4 @@
+---
+# Example of a recursive template
+sitename: "SiteName"
+title: "Welcome to {{ sitename }}"

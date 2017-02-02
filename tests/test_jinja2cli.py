@@ -22,3 +22,29 @@ def test_absolute_path():
     if isinstance(output, cli.binary_type):
         output = output.decode('utf-8')
     assert output == "Test"
+
+def test_non_recursive():
+    path = "./files/recursive_template.j2"
+    data = { 'sitename': 'SiteName', 'title': 'Welcome to {{ sitename }}' }
+    non_recursive_result_path = "./files/recursive_template_non_recursive_result.html"
+
+    output = cli.render(path, data, [], False, False)
+    if isinstance(output, cli.binary_type):
+        output = output.decode('utf-8')
+
+    with open(non_recursive_result_path) as f:
+        expected_result = f.read()
+        assert output == expected_result
+
+def test_recursive():
+    path = "./files/recursive_template.j2"
+    data = { 'sitename': 'SiteName', 'title': 'Welcome to {{ sitename }}' }
+    recursive_result_path = "./files/recursive_template_recursive_result.html"
+
+    output = cli.render(path, data, [], False, True)
+    if isinstance(output, cli.binary_type):
+        output = output.decode('utf-8')
+
+    with open(recursive_result_path) as f:
+        expected_result = f.read()
+        assert output == expected_result

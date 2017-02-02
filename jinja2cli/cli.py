@@ -166,8 +166,7 @@ from optparse import OptionParser, Option
 import jinja2
 from jinja2 import Environment, FileSystemLoader
 
-
-def render(template_path, data, extensions, strict=False):
+def render(template_path, data, extensions, strict=False, recurse=False):
     env = Environment(
         loader=FileSystemLoader(os.path.dirname(template_path)),
         extensions=extensions,
@@ -180,8 +179,13 @@ def render(template_path, data, extensions, strict=False):
     # Add environ global
     env.globals['environ'] = os.environ.get
 
-    output = env.get_template(os.path.basename(template_path)).render(data)
-    return output.encode('utf-8')
+    with open(template_path) as f:
+        template = f.read()
+        while True:
+            output = env.from_string(template).render(data)
+            if recurse is not True or template == output:
+                return output.encode('utf-8')
+            template = output
 
 
 def is_fd_alive(fd):
@@ -254,7 +258,7 @@ def cli(opts, args):
             sys.stderr.write('ERROR: unknown section. Exiting.')
             return 1
 
-    output = render(template_path, data, extensions, opts.strict)
+    output = render(template_path, data, extensions, opts.strict, opts.recurse)
 
     if isinstance(output, binary_type):
         output = output.decode('utf-8')
@@ -312,6 +316,10 @@ def main():
         '--strict',
         help='Disallow undefined variables to be used within the template',
         dest='strict', action='store_true')
+    parser.add_option(
+        '--recurse',
+        help='Recursively replace variables',
+        dest='recurse', action='store_true')
     opts, args = parser.parse_args()
 
     # Dedupe list
