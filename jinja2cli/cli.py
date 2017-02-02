@@ -179,14 +179,24 @@ def render(template_path, data, extensions, strict=False, recurse=False):
     # Add environ global
     env.globals['environ'] = os.environ.get
 
-    with open(template_path) as f:
-        template = f.read()
-        while True:
-            output = env.from_string(template).render(data)
-            if recurse is not True or template == output:
-                return output.encode('utf-8')
-            template = output
+    # Get first pass output
+    output = env.get_template(os.path.basename(template_path)).render(data)
 
+    if recurse:
+        # Recursive option
+        while True:
+            # Make it a template for the next pass
+            template = output
+            # Get another output using output from previous pass as input
+            output2 = env.from_string(template).render(data)
+            # If the output is same as before then no further replacement is
+            # necessary
+            if output2 == output:
+                break
+            # Otherwise, continue
+            output = output2
+
+    return output.encode('utf-8')
 
 def is_fd_alive(fd):
     import select
