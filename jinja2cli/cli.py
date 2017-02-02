@@ -166,6 +166,7 @@ from optparse import OptionParser, Option
 import jinja2
 from jinja2 import Environment, FileSystemLoader
 
+
 def render(template_path, data, extensions, strict=False, recurse=False):
     env = Environment(
         loader=FileSystemLoader(os.path.dirname(template_path)),
@@ -197,6 +198,7 @@ def render(template_path, data, extensions, strict=False, recurse=False):
             output = output2
 
     return output.encode('utf-8')
+
 
 def is_fd_alive(fd):
     import select
