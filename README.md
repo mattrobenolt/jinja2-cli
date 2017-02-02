@@ -24,8 +24,6 @@ Options:
   -D key=value          Define template variable in the form of key=value
   -s SECTION, --section=SECTION
                         Use only this section from the configuration
-  --strict              Disallow undefined variables to be used within the
-                        template
 ```
 
 ## Optional YAML support
