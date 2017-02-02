@@ -49,6 +49,10 @@ class MalformedXML(InvalidDataFormat):
     pass
 
 
+class MalformedENV(InvalidDataFormat):
+    pass
+
+
 def get_format(fmt):
     try:
         return formats[fmt]()
@@ -146,6 +150,17 @@ def _load_xml():
     return xmltodict.parse, xml.parsers.expat.ExpatError, MalformedXML
 
 
+def _load_env():
+    return _parse_env, Exception, MalformedENV
+
+
+def _parse_env(data):
+    if data is os.environ:
+        return data
+    else:
+        return dict(env.split("=", 1) for env in data.split('\n'))
+
+
 # Global list of available format parsers on your system
 # mapped to the callable/Exception to parse a string into a dict
 formats = {
@@ -156,6 +171,7 @@ formats = {
     'querystring': _load_querystring,
     'toml': _load_toml,
     'xml': _load_xml,
+    'env': _load_env
 }
 
 
@@ -192,7 +208,9 @@ def is_fd_alive(fd):
 def cli(opts, args):
     format = opts.format
     if args[1] == '-':
-        if is_fd_alive(sys.stdin):
+        if format == 'env':
+            data = os.environ
+        elif is_fd_alive(sys.stdin):
             data = sys.stdin.read()
         else:
             data = ''
@@ -227,6 +245,8 @@ def cli(opts, args):
                 raise InvalidDataFormat('toml: install toml to fix')
             if format == 'xml':
                 raise InvalidDataFormat('xml: install xmltodict to fix')
+            if format == 'env':
+                raise InvalidDataFormat('env: problem with the environment parsing')
             raise
         try:
             data = fn(data) or {}
