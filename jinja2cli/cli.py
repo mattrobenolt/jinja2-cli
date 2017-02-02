@@ -172,6 +172,8 @@ def render(template_path, data, extensions, strict=False):
         loader=FileSystemLoader(os.path.dirname(template_path)),
         extensions=extensions,
         keep_trailing_newline=True,
+        trim_blocks=True,
+        lstrip_blocks=True
     )
     if strict:
         from jinja2 import StrictUndefined
