@@ -51,6 +51,10 @@ class MalformedXML(InvalidDataFormat):
     pass
 
 
+class MalformedEnv(InvalidDataFormat):
+    pass
+
+
 def get_format(fmt):
     try:
         return formats[fmt]()
@@ -151,6 +155,23 @@ def _load_xml():
     return xmltodict.parse, xml.parsers.expat.ExpatError, MalformedXML
 
 
+def _load_env():
+    def _parse_env(data):
+        """
+        Parse an envfile format of key=value pairs that are newline separated
+        """
+        dict_ = {}
+        for line in data.splitlines():
+            line = line.lstrip()
+            # ignore empty or commented lines
+            if not line or line[:1] == '#':
+                continue
+            k, v = line.split('=', 1)
+            dict_[k] = v
+        return dict_
+    return _parse_env, Exception, MalformedEnv
+
+
 # Global list of available format parsers on your system
 # mapped to the callable/Exception to parse a string into a dict
 formats = {
@@ -161,6 +182,7 @@ formats = {
     'querystring': _load_querystring,
     'toml': _load_toml,
     'xml': _load_xml,
+    'env': _load_env,
 }
 
 
