@@ -318,9 +318,9 @@ def main():
         help='Enable trim blocks option',
         dest='trim_blocks', action='store_true')
     parser.add_option(
-        '--keep-trailing-newline',
-        help='Enable jinja2 keep_trailing_newline option',
-        dest='keep_trailing_newline', action='store_true')
+        '--no-trailing-newline',
+        help='Disable jinja2 keep_trailing_newline option',
+        dest='keep_trailing_newline', action='store_false')
     parser.add_option(
         '--lstrip-blocks',
         help='Enable jinja2 lstrip_blocks option',
