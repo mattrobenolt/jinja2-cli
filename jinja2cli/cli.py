@@ -167,7 +167,9 @@ import jinja2
 from jinja2 import Environment, FileSystemLoader
 
 
-def render(template_path, data, extensions, strict=False, keep_trailing_newline=True, trim_blocks=False, lstrip_blocks=False):
+def render(template_path, data, extensions, strict=False, keep_trailing_newline=True,
+           trim_blocks=False, lstrip_blocks=False):
+
     env = Environment(
         loader=FileSystemLoader(os.path.dirname(template_path)),
         extensions=extensions,
@@ -256,7 +258,8 @@ def cli(opts, args):
             sys.stderr.write('ERROR: unknown section. Exiting.')
             return 1
 
-    output = render(template_path, data, extensions, opts.strict, opts.keep_trailing_newline, opts.trim_blocks, opts.lstrip_blocks)
+    output = render(template_path, data, extensions, opts.strict, opts.keep_trailing_newline,
+                    opts.trim_blocks, opts.lstrip_blocks)
     if isinstance(output, binary_type):
         output = output.decode('utf-8')
     sys.stdout.write(output)
