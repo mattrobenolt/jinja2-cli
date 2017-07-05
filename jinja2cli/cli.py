@@ -82,7 +82,10 @@ def _load_ini():
         import configparser as ConfigParser
 
     def _parse_ini(data):
-        import StringIO
+        try:
+            from StringIO import StringIO
+        except ImportError:
+            from io import StringIO
 
         class MyConfigParser(ConfigParser.ConfigParser):
             def as_dict(self):
@@ -93,7 +96,7 @@ def _load_ini():
                 return d
 
         p = MyConfigParser()
-        p.readfp(StringIO.StringIO(data))
+        p.readfp(StringIO(data))
         return p.as_dict()
 
     return _parse_ini, ConfigParser.Error, MalformedINI
