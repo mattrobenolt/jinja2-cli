@@ -182,6 +182,8 @@ def render(template_path, data, extensions, strict=False):
 
     # Add environ global
     env.globals['environ'] = os.environ.get
+    # Add j2cliGlobal global
+    env.globals['j2cliGlobal'] = data
 
     output = env.get_template(os.path.basename(template_path)).render(data)
     return output.encode('utf-8')
