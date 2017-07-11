@@ -194,11 +194,15 @@ import jinja2
 from jinja2 import Environment, FileSystemLoader
 
 
-def render(template_path, data, extensions, strict=False):
+def render(template_path, data, extensions, strict=False, keep_trailing_newline=True,
+           trim_blocks=False, lstrip_blocks=False):
+
     env = Environment(
         loader=FileSystemLoader(os.path.dirname(template_path)),
         extensions=extensions,
-        keep_trailing_newline=True,
+        keep_trailing_newline=keep_trailing_newline,
+        trim_blocks=trim_blocks,
+        lstrip_blocks=lstrip_blocks,
     )
     if strict:
         from jinja2 import StrictUndefined
@@ -281,8 +285,8 @@ def cli(opts, args):
             sys.stderr.write('ERROR: unknown section. Exiting.')
             return 1
 
-    output = render(template_path, data, extensions, opts.strict)
-
+    output = render(template_path, data, extensions, opts.strict, opts.keep_trailing_newline,
+                    opts.trim_blocks, opts.lstrip_blocks)
     if isinstance(output, binary_type):
         output = output.decode('utf-8')
     sys.stdout.write(output)
@@ -339,6 +343,18 @@ def main():
         '--strict',
         help='Disallow undefined variables to be used within the template',
         dest='strict', action='store_true')
+    parser.add_option(
+        '--trim-blocks',
+        help='Enable trim blocks option',
+        dest='trim_blocks', action='store_true')
+    parser.add_option(
+        '--no-trailing-newline',
+        help='Disable jinja2 keep_trailing_newline option',
+        dest='keep_trailing_newline', action='store_false')
+    parser.add_option(
+        '--lstrip-blocks',
+        help='Enable jinja2 lstrip_blocks option',
+        dest='lstrip_blocks', action='store_true')
     opts, args = parser.parse_args()
 
     # Dedupe list
