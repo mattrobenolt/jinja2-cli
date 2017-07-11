@@ -151,6 +151,24 @@ def _load_xml():
     return xmltodict.parse, xml.parsers.expat.ExpatError, MalformedXML
 
 
+def merge(a, b, path=None):
+    "merges b into a"
+    # See original here: http://stackoverflow.com/a/7205107/1195316
+    if path is None:
+        path = []
+    for key in b:
+        if key in a:
+            if isinstance(a[key], dict) and isinstance(b[key], dict):
+                merge(a[key], b[key], path + [str(key)])
+            elif a[key] == b[key]:
+                pass  # same leaf value
+            else:
+                raise Exception('Conflict at %s' % '.'.join(path + [str(key)]))
+        else:
+            a[key] = b[key]
+    return a
+
+
 # Global list of available format parsers on your system
 # mapped to the callable/Exception to parse a string into a dict
 formats = {
@@ -194,8 +212,84 @@ def is_fd_alive(fd):
     return bool(select.select([fd], [], [], 0)[0])
 
 
+def _load_env_content(content, format):
+    """
+    Read environment from raw binary content
+    :param content: binary content of env
+    :param format: must be known name of parser
+    :return: dictionary
+    """
+    try:
+        fn, except_exc, raise_exc = get_format(format)
+    except InvalidDataFormat:
+        if format in ('yml', 'yaml'):
+            raise InvalidDataFormat('%s: install pyyaml to fix' % format)
+        if format == 'toml':
+            raise InvalidDataFormat('toml: install toml to fix')
+        if format == 'xml':
+            raise InvalidDataFormat('xml: install xmltodict to fix')
+        raise
+    try:
+        data = fn(content) or {}
+    except except_exc:
+        raise raise_exc(u'%s ...' % data[:60])
+    return data
+
+
+def _load_env_single_file(location, format):
+    """
+    Read environment from single file
+    :param location: path to environment file
+    :param format: file format or 'auto'
+    :return: map of parsed items
+    """
+    if format == 'auto':
+        ext = os.path.splitext(location)[1][1:]
+        if ext in formats:
+            format = ext
+        else:
+            raise InvalidDataFormat(ext)
+
+    with open(location) as fp:
+        data = fp.read()
+    return _load_env_content(data, format)
+
+
+def _load_env_from_fs(location, recursively, format):
+    """
+    Load stdin, single file, directory or directory recursively as environment
+    :param location: location to file or directory
+    :param recursively: iterate over directories and their children
+    :param format: force file parser or 'auto'
+    :return: dictionary of parsed data
+    """
+    data = {}
+
+    if recursively:
+        for root, dirs, files in os.walk(location):
+            for file in files:
+                path = os.path.join(root, file)
+                data = merge(data, _load_env_single_file(path, format))
+
+    elif os.path.isdir(location):
+        for item in os.listdir(location):
+            path = os.path.join(location, item)
+            if not os.path.isdir(path):
+                data = merge(data, _load_env_single_file(path, format))
+    else:
+        data = merge(data, _load_env_single_file(location, format))
+
+    return data
+
+
 def cli(opts, args):
     format = opts.format
+    recursive_env = not opts.plain_env
+    os_env = not opts.pure_env
+    env = {}
+    if os_env:
+        env.update(**os.environ)
+
     if args[1] == '-':
         if is_fd_alive(sys.stdin):
             data = sys.stdin.read()
@@ -208,38 +302,12 @@ def cli(opts, args):
                 format = 'yaml'
             else:
                 format = 'json'
+        env = merge(env, _load_env_content(data, format))
     else:
-        path = os.path.join(os.getcwd(), os.path.expanduser(args[1]))
-        if format == 'auto':
-            ext = os.path.splitext(path)[1][1:]
-            if ext in formats:
-                format = ext
-            else:
-                raise InvalidDataFormat(ext)
-
-        with open(path) as fp:
-            data = fp.read()
+        env = merge(env, _load_env_from_fs(os.path.expanduser(args[1]), recursive_env, format))
 
     template_path = os.path.abspath(args[0])
-
-    if data:
-        try:
-            fn, except_exc, raise_exc = get_format(format)
-        except InvalidDataFormat:
-            if format in ('yml', 'yaml'):
-                raise InvalidDataFormat('%s: install pyyaml to fix' % format)
-            if format == 'toml':
-                raise InvalidDataFormat('toml: install toml to fix')
-            if format == 'xml':
-                raise InvalidDataFormat('xml: install xmltodict to fix')
-            raise
-        try:
-            data = fn(data) or {}
-        except except_exc:
-            raise raise_exc(u'%s ...' % data[:60])
-    else:
-        data = {}
-
+    data = env
     extensions = []
     for ext in opts.extensions:
         # Allow shorthand and assume if it's not a module
@@ -317,6 +385,14 @@ def main():
         '--strict',
         help='Disallow undefined variables to be used within the template',
         dest='strict', action='store_true')
+    parser.add_option(
+        '--plain-env',
+        help='Disallow recursive scanning for environment files',
+        dest='plain_env', action='store_true')
+    parser.add_option(
+        '--pure-env',
+        help='Disallow use OS environment as variables',
+        dest='pure_env', action='store_true')
     opts, args = parser.parse_args()
 
     # Dedupe list
