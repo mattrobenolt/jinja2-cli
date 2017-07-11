@@ -6,8 +6,10 @@ License: BSD, see LICENSE for more details.
 """
 
 import sys
+import os
 from jinja2cli import __version__
 
+sys.path.insert(0, os.getcwd())
 
 PY3 = sys.version_info[0] == 3
 
