@@ -212,6 +212,8 @@ def render(template_path, data, extensions, strict=False):
 
 
 def is_fd_alive(fd):
+    if os.name == 'nt':
+        return not os.isatty(fd.fileno())
     import select
     return bool(select.select([fd], [], [], 0)[0])
 
