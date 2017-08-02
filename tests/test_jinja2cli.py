@@ -9,8 +9,6 @@ def test_relative_path():
     path = "./files/template.j2"
 
     output = cli.render(path, {"title": "Test"}, [])
-    if isinstance(output, cli.binary_type):
-        output = output.decode('utf-8')
     assert output == "Test"
 
 
@@ -19,6 +17,4 @@ def test_absolute_path():
     path = os.path.join(absolute_base_path, "files", "template.j2")
 
     output = cli.render(path, {"title": "Test"}, [])
-    if isinstance(output, cli.binary_type):
-        output = output.decode('utf-8')
     assert output == "Test"

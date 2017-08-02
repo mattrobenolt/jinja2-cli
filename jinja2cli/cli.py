@@ -13,11 +13,6 @@ sys.path.insert(0, os.getcwd())
 
 PY3 = sys.version_info[0] == 3
 
-if PY3:
-    binary_type = bytes
-else:
-    binary_type = str
-
 
 class InvalidDataFormat(Exception):
     pass
@@ -208,7 +203,7 @@ def render(template_path, data, extensions, strict=False):
     env.globals['environ'] = os.environ.get
 
     output = env.get_template(os.path.basename(template_path)).render(data)
-    return output.encode('utf-8')
+    return output if PY3 else output.encode('utf-8')
 
 
 def is_fd_alive(fd):
@@ -284,9 +279,6 @@ def cli(opts, args):
             return 1
 
     output = render(template_path, data, extensions, opts.strict)
-
-    if isinstance(output, binary_type):
-        output = output.decode('utf-8')
     sys.stdout.write(output)
     return 0
 
