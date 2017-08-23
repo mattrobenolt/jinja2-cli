@@ -24,7 +24,7 @@ setup(
     url='https://github.com/mattrobenolt/jinja2-cli',
     description='A CLI interface to Jinja2',
     long_description=__doc__,
-    packages=find_packages(),
+    packages=find_packages(exclude=['tests']),
     zip_safe=False,
     license='BSD',
     install_requires=install_requires,
