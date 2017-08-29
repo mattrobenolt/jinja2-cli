@@ -14,9 +14,9 @@ sys.path.insert(0, os.getcwd())
 PY3 = sys.version_info[0] == 3
 
 if PY3:
-    binary_type = bytes
+    text_type = str
 else:
-    binary_type = str
+    text_type = unicode
 
 
 class InvalidDataFormat(Exception):
@@ -285,8 +285,8 @@ def cli(opts, args):
 
     output = render(template_path, data, extensions, opts.strict)
 
-    if isinstance(output, binary_type):
-        output = output.decode('utf-8')
+    if isinstance(output, text_type):
+        output = output.encode('utf-8')
     sys.stdout.write(output)
     return 0
 
