@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/mattrobenolt/jinja2-cli.svg?branch=master)](https://travis-ci.org/mattrobenolt/jinja2-cli)
+
 # $ jinja2
 A CLI interface to Jinja2
 ```

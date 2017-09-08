@@ -12,4 +12,4 @@ install: pip install -e .[yaml,toml,tests]
 
 script:
   - py.test -v
-  - flake8 jinja2cli tests
+  - flake8 jinja2cli tests --builtins="unicode"
