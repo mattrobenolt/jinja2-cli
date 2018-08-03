@@ -287,7 +287,11 @@ def cli(opts, args):
 
     if isinstance(output, text_type):
         output = output.encode('utf-8')
-    sys.stdout.write(output)
+    try:
+        sys.stdout.write(output)
+    except TypeError:
+        sys.stdout.write(output.decode())
+
     return 0
 
 
