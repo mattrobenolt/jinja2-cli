@@ -203,7 +203,7 @@ from jinja2 import Environment, FileSystemLoader
 
 def render(template_path, data, extensions, strict=False):
     env = Environment(
-        loader=FileSystemLoader(os.getcwd()),
+        loader=FileSystemLoader(os.path.dirname(template_path)),
         extensions=extensions,
         keep_trailing_newline=True,
     )
