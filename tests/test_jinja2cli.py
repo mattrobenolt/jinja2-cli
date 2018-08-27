@@ -10,7 +10,7 @@ def test_relative_path():
 
     output = cli.render(path, {"title": "Test"}, [])
     if isinstance(output, cli.binary_type):
-        output = output.decode('utf-8')
+        output = output.decode("utf-8")
     assert output == "Test"
 
 
@@ -20,5 +20,5 @@ def test_absolute_path():
 
     output = cli.render(path, {"title": "Test"}, [])
     if isinstance(output, cli.binary_type):
-        output = output.decode('utf-8')
+        output = output.decode("utf-8")
     assert output == "Test"
