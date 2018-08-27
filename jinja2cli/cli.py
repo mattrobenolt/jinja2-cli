@@ -5,8 +5,13 @@ jinja2-cli
 License: BSD, see LICENSE for more details.
 """
 
-import sys
 import os
+import sys
+from optparse import Option, OptionParser
+
+import jinja2
+from jinja2 import Environment, FileSystemLoader
+
 from jinja2cli import __version__
 
 sys.path.insert(0, os.getcwd())
@@ -191,14 +196,6 @@ formats = {
     "xml": _load_xml,
     "env": _load_env,
 }
-
-
-import os
-import sys
-from optparse import OptionParser, Option
-
-import jinja2
-from jinja2 import Environment, FileSystemLoader
 
 
 def render(template_path, data, extensions, strict=False):

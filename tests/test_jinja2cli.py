@@ -1,4 +1,5 @@
 import os
+
 from jinja2cli import cli
 
 # change dir to tests directory to make relative paths possible

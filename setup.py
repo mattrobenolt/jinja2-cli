@@ -11,7 +11,7 @@ jinja2-cli
   $ curl -s http://httpbin.org/ip | jinja2 helloip.tmpl > helloip.html
 """
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 install_requires = ["jinja2"]
 tests_requires = ["pytest", "flake8<3"]
