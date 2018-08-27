@@ -196,7 +196,7 @@ from jinja2 import Environment, FileSystemLoader
 
 def render(template_path, data, extensions, strict=False):
     env = Environment(
-        loader=FileSystemLoader(os.path.dirname(template_path)),
+        loader=FileSystemLoader(os.getcwd()),
         extensions=extensions,
         keep_trailing_newline=True,
     )
