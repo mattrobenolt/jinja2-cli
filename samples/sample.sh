@@ -7,14 +7,17 @@ list2yml() {
   local name
   name=$1
   shift
-  echo "'$name': ["
+  echo "$name:"
   for item
   do
-     echo "'$item',"
+     echo "- $item"
   done
-  echo ']'
+}
+
+val2yml() {
+  echo "$1: $2"
 }
 
 ITEMS="apple banana cherry"
 
-list2yml items $ITEMS | jinja2 sample.jinja2
+(list2yml items $ITEMS; val2yml foo true) | jinja2 sample.jinja2
