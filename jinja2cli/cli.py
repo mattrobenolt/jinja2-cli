@@ -13,7 +13,7 @@ import jinja2
 from jinja2 import Environment, FileSystemLoader
 
 from jinja2cli import __version__
-from filters import FILTERS
+from .filters import FILTERS
 
 sys.path.insert(0, os.getcwd())
 
