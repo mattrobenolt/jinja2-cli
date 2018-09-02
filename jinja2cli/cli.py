@@ -13,7 +13,7 @@ import jinja2
 from jinja2 import Environment, FileSystemLoader
 
 from jinja2cli import __version__
-from filters import FILTERS
+from .filters import FILTERS
 
 sys.path.insert(0, os.getcwd())
 
@@ -211,7 +211,7 @@ def render(template_path, data, extensions, strict=False):
 
     # Add environ global
     env.globals["environ"] = os.environ.get
-    env.filters.update(FILTERS)
+    # env.filters.update(FILTERS)
 
     output = env.get_template(os.path.basename(template_path)).render(data)
     return output.encode("utf-8")
