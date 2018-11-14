@@ -223,14 +223,12 @@ def is_fd_alive(fd):
 
     return bool(select.select([fd], [], [], 0)[0])
 
-
 def cli(opts, args):
+    template_path, data = args
     format = opts.format
-    if args[1] == "-":
-        if is_fd_alive(sys.stdin):
+    if data in ("-", ""):
+        if data == "-" or (data == "" and is_fd_alive(sys.stdin)):
             data = sys.stdin.read()
-        else:
-            data = ""
         if format == "auto":
             # default to yaml first if available since yaml
             # is a superset of json
@@ -239,7 +237,7 @@ def cli(opts, args):
             else:
                 format = "json"
     else:
-        path = os.path.join(os.getcwd(), os.path.expanduser(args[1]))
+        path = os.path.join(os.getcwd(), os.path.expanduser(data))
         if format == "auto":
             ext = os.path.splitext(path)[1][1:]
             if ext in formats:
@@ -250,7 +248,7 @@ def cli(opts, args):
         with open(path) as fp:
             data = fp.read()
 
-    template_path = os.path.abspath(args[0])
+    template_path = os.path.abspath(template_path)
 
     if data:
         try:
@@ -373,9 +371,9 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-    # Without the second argv, assume they want to read from stdin
+    # Without the second argv, assume they maybe want to read from stdin
     if len(args) == 1:
-        args.append("-")
+        args.append("")
 
     if opts.format not in formats and opts.format != "auto":
         raise InvalidDataFormat(opts.format)
