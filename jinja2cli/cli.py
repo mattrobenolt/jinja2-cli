@@ -223,6 +223,7 @@ def is_fd_alive(fd):
 
     return bool(select.select([fd], [], [], 0)[0])
 
+
 def cli(opts, args):
     template_path, data = args
     format = opts.format
