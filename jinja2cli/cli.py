@@ -289,8 +289,8 @@ def cli(opts, args):
 
     output = render(template_path, data, extensions, opts.strict)
 
-    if isinstance(output, text_type):
-        output = output.encode("utf-8")
+    if isinstance(output, bytes):
+        output = output.decode("utf-8")
     sys.stdout.write(output)
     return 0
 
