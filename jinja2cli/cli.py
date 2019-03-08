@@ -10,7 +10,7 @@ import sys
 from optparse import Option, OptionParser
 
 import jinja2
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 from jinja2cli import __version__
 
@@ -20,8 +20,18 @@ PY3 = sys.version_info[0] == 3
 
 if PY3:
     text_type = str
+    bytes_type = bytes
 else:
     text_type = unicode  # NOQA
+    bytes_type = str  # NOQA
+
+
+def force_text(data):
+    if isinstance(data, text_type):
+        return data
+    if isinstance(data, bytes_type):
+        return data.decode("utf8")
+    return data
 
 
 class InvalidDataFormat(Exception):
@@ -147,7 +157,7 @@ def _load_querystring():
                         cur[piece] = v
                     cur = cur[piece]
             else:
-                dict_[k] = v
+                dict_[force_text(k)] = force_text(v)
         return dict_
 
     return _parse_qs, Exception, MalformedQuerystring
@@ -178,7 +188,7 @@ def _load_env():
             if not line or line[:1] == "#":
                 continue
             k, v = line.split("=", 1)
-            dict_[k] = v
+            dict_[force_text(k)] = force_text(v)
         return dict_
 
     return _parse_env, Exception, MalformedEnv
@@ -205,15 +215,12 @@ def render(template_path, data, extensions, strict=False):
         keep_trailing_newline=True,
     )
     if strict:
-        from jinja2 import StrictUndefined
-
         env.undefined = StrictUndefined
 
     # Add environ global
-    env.globals["environ"] = os.environ.get
+    env.globals["environ"] = lambda key: force_text(os.environ.get(key))
 
-    output = env.get_template(os.path.basename(template_path)).render(data)
-    return output.encode("utf-8")
+    return env.get_template(os.path.basename(template_path)).render(data)
 
 
 def is_fd_alive(fd):
@@ -288,16 +295,17 @@ def cli(opts, args):
             sys.stderr.write("ERROR: unknown section. Exiting.")
             return 1
 
-    output = render(template_path, data, extensions, opts.strict)
-
-    if isinstance(output, bytes):
-        output = output.decode("utf-8")
-    sys.stdout.write(output)
+    sys.stdout.write(render(template_path, data, extensions, opts.strict))
+    sys.stdout.flush()
     return 0
 
 
 def parse_kv_string(pairs):
-    return dict(pair.split("=", 1) for pair in pairs)
+    dict_ = {}
+    for pair in pairs:
+        k, v = pair.split("=", 1)
+        dict_[force_text(k)] = force_text(v)
+    return dict_
 
 
 class LazyHelpOption(Option):
