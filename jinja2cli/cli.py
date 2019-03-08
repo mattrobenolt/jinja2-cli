@@ -299,8 +299,13 @@ def cli(opts, args):
             sys.stderr.write("ERROR: unknown section. Exiting.")
             return 1
 
-    sys.stdout.write(render(template_path, data, extensions, opts.strict))
-    sys.stdout.flush()
+    if opts.outfile is None:
+        out = sys.stdout
+    else:
+        out = open(opts.outfile, "w")
+
+    out.write(render(template_path, data, extensions, opts.strict))
+    out.flush()
     return 0
 
 
@@ -370,6 +375,14 @@ def main():
         help="Disallow undefined variables to be used within the template",
         dest="strict",
         action="store_true",
+    )
+    parser.add_option(
+        "-o",
+        "--outfile",
+        help="File to use for output. Default is stdout.",
+        dest="outfile",
+        metavar="FILE",
+        action="store",
     )
     opts, args = parser.parse_args()
 
