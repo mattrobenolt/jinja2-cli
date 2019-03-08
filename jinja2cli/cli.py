@@ -5,6 +5,10 @@ jinja2-cli
 License: BSD, see LICENSE for more details.
 """
 
+import warnings
+
+warnings.filterwarnings("ignore")
+
 import os
 import sys
 from optparse import Option, OptionParser
