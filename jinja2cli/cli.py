@@ -81,13 +81,18 @@ def get_format(fmt):
         raise InvalidDataFormat(fmt)
 
 
+def has_format(fmt):
+    try:
+        get_format(fmt)
+        return True
+    except InvalidDataFormat:
+        return False
+
+
 def get_available_formats():
     for fmt in formats.keys():
-        try:
-            get_format(fmt)
+        if has_format(fmt):
             yield fmt
-        except InvalidDataFormat:
-            pass
     yield "auto"
 
 
@@ -244,7 +249,7 @@ def cli(opts, args):
         if format == "auto":
             # default to yaml first if available since yaml
             # is a superset of json
-            if "yaml" in formats:
+            if has_format("yaml"):
                 format = "yaml"
             else:
                 format = "json"
@@ -252,7 +257,7 @@ def cli(opts, args):
         path = os.path.join(os.getcwd(), os.path.expanduser(data))
         if format == "auto":
             ext = os.path.splitext(path)[1][1:]
-            if ext in formats:
+            if has_format(ext):
                 format = ext
             else:
                 raise InvalidDataFormat(ext)
