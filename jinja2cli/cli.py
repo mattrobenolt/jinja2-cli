@@ -13,11 +13,6 @@ import os
 import sys
 from optparse import Option, OptionParser
 
-import jinja2
-from jinja2 import Environment, FileSystemLoader, StrictUndefined
-
-from jinja2cli import __version__
-
 sys.path.insert(0, os.getcwd())
 
 PY3 = sys.version_info[0] == 3
@@ -218,6 +213,8 @@ formats = {
 
 
 def render(template_path, data, extensions, strict=False):
+    from jinja2 import Environment, FileSystemLoader, StrictUndefined
+
     env = Environment(
         loader=FileSystemLoader(os.path.dirname(template_path)),
         extensions=extensions,
@@ -340,11 +337,25 @@ class LazyHelpOption(Option):
         return h
 
 
+class LazyOptionParser(OptionParser):
+    def __init__(self, **kwargs):
+        # Fake a version so we can lazy load it later.
+        # This is due to internals of OptionParser, but it's
+        # fine
+        kwargs["version"] = 1
+        kwargs["option_class"] = LazyHelpOption
+        OptionParser.__init__(self, **kwargs)
+
+    def get_version(self):
+        from jinja2 import __version__ as jinja_version
+        from jinja2cli import __version__
+
+        return "jinja2-cli v%s\n - Jinja2 v%s" % (__version__, jinja_version)
+
+
 def main():
-    parser = OptionParser(
-        option_class=LazyHelpOption,
-        usage="usage: %prog [options] <input template> <input data>",
-        version="jinja2-cli v%s\n - Jinja2 v%s" % (__version__, jinja2.__version__),
+    parser = LazyOptionParser(
+        usage="usage: %prog [options] <input template> <input data>"
     )
     parser.add_option(
         "--format",
