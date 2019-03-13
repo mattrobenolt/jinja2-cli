@@ -306,6 +306,11 @@ def cli(opts, args):
     else:
         out = open(opts.outfile, "w")
 
+    if not PY3:
+        import codecs
+
+        out = codecs.getwriter("utf8")(out)
+
     out.write(render(template_path, data, extensions, opts.strict))
     out.flush()
     return 0
