@@ -212,11 +212,11 @@ formats = {
 }
 
 
-def render(template_path, data, extensions, strict=False):
+def render(template_path, data, extensions, strict=False, includes=[]):
     from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
     env = Environment(
-        loader=FileSystemLoader(os.path.dirname(template_path)),
+        loader=FileSystemLoader([os.path.dirname(template_path)] + includes),
         extensions=extensions,
         keep_trailing_newline=True,
     )
@@ -311,7 +311,7 @@ def cli(opts, args):
 
         out = codecs.getwriter("utf8")(out)
 
-    out.write(render(template_path, data, extensions, opts.strict))
+    out.write(render(template_path, data, extensions, opts.strict, includes=opts.includes))
     out.flush()
     return 0
 
@@ -377,6 +377,13 @@ def main():
         dest="extensions",
         action="append",
         default=["do", "with_", "autoescape", "loopcontrols"],
+    )
+    parser.add_option(
+        "-I",
+        "--includes",
+        help="extra jinja2 template directory to search for (included) templates",
+        dest="includes",
+        action="append",
     )
     parser.add_option(
         "-D",
