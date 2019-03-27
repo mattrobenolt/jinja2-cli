@@ -384,6 +384,7 @@ def main():
         help="extra jinja2 template directory to search for (included) templates",
         dest="includes",
         action="append",
+        default=[],
     )
     parser.add_option(
         "-D",
