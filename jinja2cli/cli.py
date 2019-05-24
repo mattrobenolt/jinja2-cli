@@ -225,6 +225,7 @@ def render(template_path, data, extensions, strict=False):
 
     # Add environ global
     env.globals["environ"] = lambda key: force_text(os.environ.get(key))
+    env.globals["get_context"] = lambda: data
 
     return env.get_template(os.path.basename(template_path)).render(data)
 
