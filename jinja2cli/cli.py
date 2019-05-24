@@ -291,8 +291,6 @@ def cli(opts, args):
             ext = "jinja2.ext." + ext
         extensions.append(ext)
 
-    data.update(parse_kv_string(opts.D or []))
-
     # Use only a specific section if needed
     if opts.section:
         section = opts.section
@@ -301,6 +299,8 @@ def cli(opts, args):
         else:
             sys.stderr.write("ERROR: unknown section. Exiting.")
             return 1
+
+    data.update(parse_kv_string(opts.D or []))
 
     if opts.outfile is None:
         out = sys.stdout
