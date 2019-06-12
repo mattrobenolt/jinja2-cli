@@ -212,15 +212,8 @@ formats = {
 }
 
 
-import os
-import sys
-from optparse import OptionParser, Option
-
-import jinja2
-from jinja2 import Environment, FileSystemLoader
-
-
 def render(template_path, data, extensions, strict=False, recurse=False):
+    from jinja2 import Environment, FileSystemLoader, StrictUndefined
     env = Environment(
         loader=FileSystemLoader(os.path.dirname(template_path)),
         extensions=extensions,

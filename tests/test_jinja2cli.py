@@ -24,6 +24,7 @@ def test_absolute_path():
     assert output == title
     assert type(output) == cli.text_type
 
+
 def test_non_recursive():
     path = "./files/recursive_template.j2"
     data = {'sitename': 'SiteName', 'title': 'Welcome to {{ sitename }}'}
