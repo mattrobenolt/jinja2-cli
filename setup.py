@@ -11,40 +11,36 @@ jinja2-cli
   $ curl -s http://httpbin.org/ip | jinja2 helloip.tmpl > helloip.html
 """
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
-install_requires = ['jinja2']
-tests_requires = ['pytest', 'flake8<3']
+install_requires = ["jinja2"]
+tests_requires = ["pytest", "flake8"]
 
 setup(
-    name='jinja2-cli',
-    version='0.7.0.dev0',
-    author='Matt Robenolt',
-    author_email='matt@ydekproductions.com',
-    url='https://github.com/mattrobenolt/jinja2-cli',
-    description='A CLI interface to Jinja2',
+    name="jinja2-cli",
+    version="0.7.0",
+    author="Matt Robenolt",
+    author_email="matt@ydekproductions.com",
+    url="https://github.com/mattrobenolt/jinja2-cli",
+    description="A CLI interface to Jinja2",
     long_description=__doc__,
-    packages=find_packages(),
+    packages=find_packages(exclude=["tests"]),
     zip_safe=False,
-    license='BSD',
+    license="BSD",
     install_requires=install_requires,
     extras_require={
-        'yaml': install_requires + ['pyyaml'],
-        'toml': install_requires + ['toml'],
-        'xml': install_requires + ['xmltodict'],
-        'tests': install_requires + tests_requires,
+        "yaml": install_requires + ["pyyaml"],
+        "toml": install_requires + ["toml"],
+        "xml": install_requires + ["xmltodict"],
+        "tests": install_requires + tests_requires,
     },
     tests_require=tests_requires,
     include_package_data=True,
-    entry_points={
-        'console_scripts': [
-            'jinja2 = jinja2cli:main',
-        ]
-    },
+    entry_points={"console_scripts": ["jinja2 = jinja2cli:main"]},
     classifiers=[
-        'Intended Audience :: Developers',
-        'Intended Audience :: System Administrators',
-        'Operating System :: OS Independent',
-        'Topic :: Software Development'
+        "Intended Audience :: Developers",
+        "Intended Audience :: System Administrators",
+        "Operating System :: OS Independent",
+        "Topic :: Software Development",
     ],
 )

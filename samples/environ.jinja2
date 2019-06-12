@@ -1,0 +1,9 @@
+jinja2-cli makes environment variables via a jinja global variable.
+
+To get an environment variable's value, subscript environ like this:
+
+PATH is {{ environ('PATH') }}
+USER is {{ environ('USER') }}
+USERNAME is {{ environ('USERNAME') }}
+
+Alas, you can't loop through them; environ is not iterable.
