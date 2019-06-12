@@ -422,9 +422,17 @@ def main():
         action="store_true",
     )
     parser.add_option(
+        "-o",
+        "--outfile",
+        help="File to use for output. Default is stdout.",
+        dest="outfile",
+        metavar="FILE",
+        action="store",
+    )
+    parser.add_option(
         '--recurse',
         help='Recursively replace variables',
-        dest='recurse', 
+        dest='recurse',
         action='store_true',
     )
     opts, args = parser.parse_args()
