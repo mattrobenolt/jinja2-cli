@@ -212,7 +212,7 @@ formats = {
 }
 
 
-def render(template_path, data, extensions, strict=False):
+def render(template_path, data, extensions, strict=False, opts={}):
     from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
     env = Environment(
@@ -222,6 +222,18 @@ def render(template_path, data, extensions, strict=False):
     )
     if strict:
         env.undefined = StrictUndefined
+    if opts.block_start_string:
+        env.block_start_string = opts.block_start_string
+    if opts.block_end_string:
+        env.block_end_string = opts.block_end_string
+    if opts.variable_start_string:
+        env.variable_start_string = opts.variable_start_string
+    if opts.variable_end_string:
+        env.variable_end_string = opts.variable_end_string
+    if opts.comment_start_string:
+        env.comment_start_string = opts.comment_start_string
+    if opts.comment_end_string:
+        env.comment_end_string = opts.comment_end_string
 
     # Add environ global
     env.globals["environ"] = lambda key: force_text(os.environ.get(key))
@@ -312,7 +324,7 @@ def cli(opts, args):
 
         out = codecs.getwriter("utf8")(out)
 
-    out.write(render(template_path, data, extensions, opts.strict))
+    out.write(render(template_path, data, extensions, opts.strict, opts))
     out.flush()
     return 0
 
@@ -404,6 +416,42 @@ def main():
         help="File to use for output. Default is stdout.",
         dest="outfile",
         metavar="FILE",
+        action="store",
+    )
+    parser.add_option(
+        "--block_start_string",
+        help="The string marking the beginning of a block. Defaults to '{%'.",
+        dest="block_start_string",
+        action="store",
+    )
+    parser.add_option(
+        "--block_end_string",
+        help="The string marking the end of a block. Defaults to '%}'.",
+        dest="block_end_string",
+        action="store",
+    )
+    parser.add_option(
+        "--variable_start_string",
+        help="The string marking the beginning of a print statement. Defaults to '{{'.",
+        dest="variable_start_string",
+        action="store",
+    )
+    parser.add_option(
+        "--variable_end_string",
+        help="The string marking the end of a print statement. Defaults to '}}'.",
+        dest="variable_end_string",
+        action="store",
+    )
+    parser.add_option(
+        "--comment_start_string",
+        help="The string marking the beginning of a comment. Defaults to '{#'.",
+        dest="comment_start_string",
+        action="store",
+    )
+    parser.add_option(
+        "--comment_end_string",
+        help="The string marking the end of a comment. Defaults to '#}'.",
+        dest="comment_end_string",
         action="store",
     )
     opts, args = parser.parse_args()
