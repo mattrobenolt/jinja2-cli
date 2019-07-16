@@ -491,7 +491,7 @@ def main():
     )
     parser.add_option(
         "--env-opt",
-        help="Define jinja2 Environment option in the form of option=value. Available options: %s",
+        help="Define jinja2 Environment option in the form of option=value",
         dest="env",
         action="append",
         metavar="option=value",
