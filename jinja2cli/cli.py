@@ -212,7 +212,19 @@ formats = {
 }
 
 
-def render(template_path, data, extensions, strict=False):
+def convert_value(value, target_type):
+    if target_type == bool:
+        if value.lower() == "true":
+            return True
+        if value.lower() == "false":
+            return False
+        raise ValueError("not a valid boolean: %s" % value)
+    if target_type == int:
+        return int(value)
+    return value
+
+
+def render(template_path, data, extensions, strict=False, env_opts={}):
     from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
     env = Environment(
@@ -222,6 +234,13 @@ def render(template_path, data, extensions, strict=False):
     )
     if strict:
         env.undefined = StrictUndefined
+    for key in env_opts:
+        if hasattr(env, key):
+            target_type = type(getattr(env, key))
+            new_value = convert_value(env_opts[key], target_type)
+            setattr(env, key, new_value)
+        else:
+            raise MalformedEnv("unsupported environment option: %s" % key)
 
     # Add environ global
     env.globals["environ"] = lambda key: force_text(os.environ.get(key))
@@ -302,6 +321,8 @@ def cli(opts, args):
 
     data.update(parse_kv_string(opts.D or []))
 
+    env_opts = parse_kv_string(opts.env or [])
+
     if opts.outfile is None:
         out = sys.stdout
     else:
@@ -312,7 +333,7 @@ def cli(opts, args):
 
         out = codecs.getwriter("utf8")(out)
 
-    out.write(render(template_path, data, extensions, opts.strict))
+    out.write(render(template_path, data, extensions, opts.strict, env_opts))
     out.flush()
     return 0
 
@@ -405,6 +426,13 @@ def main():
         dest="outfile",
         metavar="FILE",
         action="store",
+    )
+    parser.add_option(
+        "--env-opt",
+        help="Define jinja2 Environment option in the form of option=value. Available options: %s",
+        dest="env",
+        action="append",
+        metavar="option=value",
     )
     opts, args = parser.parse_args()
 
