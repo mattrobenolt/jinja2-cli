@@ -359,7 +359,7 @@ class LazyOptionParser(OptionParser):
         try:
             from jinja2cli import __version__
             return "jinja2-cli v%s\n - Jinja2 v%s" % (__version__, jinja_version)
-        except ModuleNotFoundError:
+        except ImportError:
             return "jinja2-cli\n - Jinja2 v%s" % (jinja_version)
 
 
