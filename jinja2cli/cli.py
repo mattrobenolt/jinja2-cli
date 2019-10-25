@@ -325,7 +325,7 @@ def parse_kv_string(pairs):
         v = force_text(v)
         aux = dict()
         for i in reversed(k.split('.')):
-            aux = { i : v }
+            aux = {i: v}
             v = aux
         dict_.update(aux)
     return dict_
