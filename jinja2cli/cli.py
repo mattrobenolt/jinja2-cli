@@ -321,12 +321,12 @@ def parse_kv_string(pairs):
     dict_ = {}
     for pair in pairs:
         k, v = pair.split("=", 1)
-        k=force_text(k)
-        v=force_text(v)
-        aux=dict()
+        k = force_text(k)
+        v = force_text(v)
+        aux = dict()
         for i in reversed(k.split('.')):
-            aux={i:v}
-            v=aux
+            aux = { i : v }
+            v = aux
         dict_.update(aux)
     return dict_
 
