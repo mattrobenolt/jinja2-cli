@@ -300,7 +300,7 @@ def cli(opts, args):
             sys.stderr.write("ERROR: unknown section. Exiting.")
             return 1
 
-    data.update(parse_kv_string(opts.D or []))
+    parse_kv_string(data, opts.D or [])
 
     if opts.outfile is None:
         out = sys.stdout
@@ -317,18 +317,24 @@ def cli(opts, args):
     return 0
 
 
-def parse_kv_string(pairs):
+def parse_kv_string(data, pairs):
     dict_ = {}
     for pair in pairs:
         k, v = pair.split("=", 1)
-        k = force_text(k)
+        k = force_text(k).split('.')
         v = force_text(v)
-        aux = dict()
-        for i in reversed(k.split('.')):
-            aux = {i: v}
-            v = aux
-        dict_.update(aux)
-    return dict_
+
+        last = None
+        current = data
+        for key in k:
+            last = current
+            current = current.get(key)
+            if current == None:
+                current = {}
+                last[key] = current
+
+        last[k[-1]] = v
+    return data
 
 
 class LazyHelpOption(Option):
