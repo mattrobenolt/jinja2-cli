@@ -4,7 +4,7 @@
 *.so
 
 # Packages
-*.egg
+*.eggs
 *.egg-info
 dist
 build
@@ -17,6 +17,12 @@ develop-eggs
 .installed.cfg
 lib
 lib64
+
+# Virtualenv
+env
+.env
+venv
+.venv
 
 # Installer logs
 pip-log.txt

@@ -6,13 +6,11 @@ License: BSD, see LICENSE for more details.
 """
 
 import warnings
-
-warnings.filterwarnings("ignore")
-
 import os
 import sys
 from optparse import Option, OptionParser
 
+warnings.filterwarnings("ignore")
 sys.path.insert(0, os.getcwd())
 
 PY3 = sys.version_info[0] == 3
