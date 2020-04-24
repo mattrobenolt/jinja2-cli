@@ -212,7 +212,7 @@ formats = {
 }
 
 
-def render(template_path, data, extensions, strict=False):
+def render(template_path, data, extensions, filters, strict=False):
     from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
     env = Environment(
@@ -226,6 +226,13 @@ def render(template_path, data, extensions, strict=False):
     # Add environ global
     env.globals["environ"] = lambda key: force_text(os.environ.get(key))
     env.globals["get_context"] = lambda: data
+
+    if filters:
+        from jinja2.utils import import_string
+
+        for filter in set(filters):
+            filter = import_string(filter)
+            env.filters[filter.__name__] = filter
 
     return env.get_template(os.path.basename(template_path)).render(data)
 
@@ -312,7 +319,7 @@ def cli(opts, args):
 
         out = codecs.getwriter("utf8")(out)
 
-    out.write(render(template_path, data, extensions, opts.strict))
+    out.write(render(template_path, data, extensions, opts.filters, opts.strict))
     out.flush()
     return 0
 
@@ -378,6 +385,14 @@ def main():
         dest="extensions",
         action="append",
         default=["do", "with_", "autoescape", "loopcontrols"],
+    )
+    parser.add_option(
+        "-f",
+        "--filter",
+        help="extra jinja2 filters to load",
+        dest="filters",
+        action="append",
+        default=[],
     )
     parser.add_option(
         "-D",

@@ -10,7 +10,7 @@ def test_relative_path():
     path = "./files/template.j2"
 
     title = b"\xc3\xb8".decode("utf8")
-    output = cli.render(path, {"title": title}, [])
+    output = cli.render(path, {"title": title}, [], [])
     assert output == title
     assert type(output) == cli.text_type
 
@@ -20,6 +20,6 @@ def test_absolute_path():
     path = os.path.join(absolute_base_path, "files", "template.j2")
 
     title = b"\xc3\xb8".decode("utf8")
-    output = cli.render(path, {"title": title}, [])
+    output = cli.render(path, {"title": title}, [], [])
     assert output == title
     assert type(output) == cli.text_type
