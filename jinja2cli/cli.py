@@ -212,12 +212,13 @@ formats = {
 }
 
 
-def render(template_path, data, extensions, strict=False):
+def render(template_path, data, extensions, env_options, strict=False):
     from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
     env = Environment(
         loader=FileSystemLoader(os.path.dirname(template_path)),
         extensions=extensions,
+        **env_options,
         keep_trailing_newline=True,
     )
     if strict:
@@ -300,6 +301,23 @@ def cli(opts, args):
             sys.stderr.write("ERROR: unknown section. Exiting.")
             return 1
 
+    # Set up environment options suitable to use LaTeX templates
+    if opts.latex:
+        env_options = dict(
+            block_start_string = '\BLOCK{',
+            block_end_string = '}',
+            variable_start_string = '\VAR{',
+            variable_end_string = '}',
+            comment_start_string = '\#{',
+            comment_end_string = '}',
+            line_statement_prefix = '%%',
+            line_comment_prefix = '%#',
+            trim_blocks = True,
+            autoescape = False)
+
+    else:
+        env_options = dict()
+
     data.update(parse_kv_string(opts.D or []))
 
     if opts.outfile is None:
@@ -312,7 +330,7 @@ def cli(opts, args):
 
         out = codecs.getwriter("utf8")(out)
 
-    out.write(render(template_path, data, extensions, opts.strict))
+    out.write(render(template_path, data, extensions, env_options, opts.strict))
     out.flush()
     return 0
 
@@ -396,6 +414,15 @@ def main():
         "--strict",
         help="Disallow undefined variables to be used within the template",
         dest="strict",
+        action="store_true",
+    )
+    parser.add_option(
+        # These marker types might be compatible with TeX, too, so --tex
+        # might be more accurate (but also harder to find)
+        "--latex",
+        "--tex",
+        help="Use variable/block/... markers that are compatible with LaTeX",
+        dest="latex",
         action="store_true",
     )
     parser.add_option(
