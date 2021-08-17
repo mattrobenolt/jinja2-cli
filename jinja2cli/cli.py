@@ -212,7 +212,9 @@ formats = {
 }
 
 
-def render(template_path, data, extensions, strict=False, includes=[]):
+def render(template_path, data, extensions, strict=False, includes=None):
+    includes = [] if includes is None else includes
+
     from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
     env = Environment(
