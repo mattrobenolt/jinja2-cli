@@ -142,7 +142,7 @@ def _load_querystring():
         import urllib.parse as urlparse
 
     def _parse_qs(data):
-        """ Extend urlparse to allow objects in dot syntax.
+        """Extend urlparse to allow objects in dot syntax.
 
         >>> _parse_qs('user.first_name=Matt&user.last_name=Robenolt')
         {'user': {'first_name': 'Matt', 'last_name': 'Robenolt'}}
@@ -313,7 +313,9 @@ def cli(opts, args):
 
         out = codecs.getwriter("utf8")(out)
 
-    out.write(render(template_path, data, extensions, opts.strict, includes=opts.includes))
+    out.write(
+        render(template_path, data, extensions, opts.strict, includes=opts.includes)
+    )
     out.flush()
     return 0
 
