@@ -27,7 +27,7 @@ def test_absolute_path():
     assert type(output) == cli.text_type
 
 
-def test_sys_call_succeeds():
+def test_cmd_succeeds():
     template = "files/maindir_template.j2"
     title = "Greatest Title 1"
     ctx = json.dumps({"title": title})
@@ -44,7 +44,7 @@ def test_sys_call_succeeds():
     assert jinja_proc.stdout.readlines() == [(title + "\n").encode()]
 
 
-def test_sys_call_fails_without_includes_flag():
+def test_cmd_fails_without_includes_flag():
     template = "files/subdir/subdir_template.j2"
     title = "Greatest Title 2"
     context = json.dumps({"title": title})
@@ -64,7 +64,7 @@ def test_sys_call_fails_without_includes_flag():
     assert jinja_proc.stdout.readlines() == []
 
 
-def test_sys_call_succeeds_with_includes_flag():
+def test_cmd_succeeds_with_includes_flag():
     template = "files/subdir/subdir_template.j2"
     title = "Greatest Title 3"
     ctx = json.dumps({"title": title})
