@@ -130,9 +130,17 @@ def _load_ini():
 
 
 def _load_yaml():
-    import yaml
+    from yaml import load, YAMLError
 
-    return yaml.load, yaml.YAMLError, MalformedYAML
+    try:
+        from yaml import CSafeLoader as SafeLoader
+    except ImportError:
+        from yaml import SafeLoader
+
+    def yaml_loader(stream):
+        return load(stream, Loader=SafeLoader)
+
+    return yaml_loader, YAMLError, MalformedYAML
 
 
 def _load_querystring():
