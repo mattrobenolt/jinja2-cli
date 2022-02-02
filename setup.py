@@ -18,7 +18,7 @@ tests_requires = ["pytest", "flake8"]
 
 setup(
     name="jinja2-cli",
-    version="0.8.1",
+    version="0.9.0.dev0",
     author="Matt Robenolt",
     author_email="matt@ydekproductions.com",
     url="https://github.com/mattrobenolt/jinja2-cli",
