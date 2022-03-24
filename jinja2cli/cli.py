@@ -385,7 +385,7 @@ def main():
         help="extra jinja2 extensions to load",
         dest="extensions",
         action="append",
-        default=["do", "with_", "autoescape", "loopcontrols"],
+        default=["do", "loopcontrols"],
     )
     parser.add_option(
         "-D",
