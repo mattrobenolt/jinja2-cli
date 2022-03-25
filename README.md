@@ -43,6 +43,26 @@ If `xmltodict` is present, you can use XML as an input data source.
 
 `$ pip install jinja2-cli[xml]`
 
+## Development
+For local development install the package in develop mode with `tests` extras
+into a virtualenv:
+
+```console
+$ python -m venv env
+$ env/bin/activate
+(env) $ pip install -e ".[tests]"
+```
+
+### Code style
+The project uses `flake8` to check the code style.
+
+### Tests
+To invoke tests (and code style checks) run the `pytest` command:
+
+```console
+(env) $ pytest
+```
+
 ## TODO
  * Variable inheritance and overrides
   * Tests!

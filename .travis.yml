@@ -11,5 +11,4 @@ python:
 install: pip install -e .[yaml,toml,tests,xml]
 
 script:
-  - pytest -v
-  - flake8 jinja2cli tests
+  - pytest -vvv
