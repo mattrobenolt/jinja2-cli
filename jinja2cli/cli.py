@@ -220,7 +220,13 @@ formats = {
 }
 
 
-def render(template_path, data, extensions, strict=False):
+def _load_ansible_filters():
+    from ansible.plugins.filter.core import FilterModule
+
+    return FilterModule().filters()
+
+
+def render(template_path, data, extensions, strict=False, ansible=False):
     from jinja2 import (
         __version__ as jinja_version,
         Environment,
@@ -246,6 +252,8 @@ def render(template_path, data, extensions, strict=False):
     )
     if strict:
         env.undefined = StrictUndefined
+    if ansible:
+        env.filters.update(_load_ansible_filters())
 
     # Add environ global
     env.globals["environ"] = lambda key: force_text(os.environ.get(key))
@@ -336,7 +344,7 @@ def cli(opts, args):
 
         out = codecs.getwriter("utf8")(out)
 
-    out.write(render(template_path, data, extensions, opts.strict))
+    out.write(render(template_path, data, extensions, opts.strict, opts.ansible))
     out.flush()
     return 0
 
@@ -420,6 +428,13 @@ def main():
         "--strict",
         help="Disallow undefined variables to be used within the template",
         dest="strict",
+        action="store_true",
+    )
+    parser.add_option(
+        "-a",
+        "--ansible",
+        help="Enable support for Ansible filters",
+        dest="ansible",
         action="store_true",
     )
     parser.add_option(

@@ -28,6 +28,11 @@ Options:
                         template
 ```
 
+## Optional Ansible support
+If `Ansible Core` is present, you can use Ansible filters within your templates.
+
+`$ pip install jinja2-cli[ansible]`
+
 ## Optional YAML support
 If `PyYAML` is present, you can use YAML as an input data source.
 
