@@ -220,25 +220,55 @@ formats = {
 }
 
 
-def _load_ansible_filters():
+def _ansible_filter_loader(base_module, module_path=None):
     from pkgutil import iter_modules
     from jinja2.utils import import_string
 
+    if module_path is not None:
+        try:
+            parent_module = import_string(f"{base_module.__name__}.{module_path}.plugins.filter")
+        except ImportError:
+            print(f"Could not find collection '{module_path}', did you mean 'ansible.{module_path}'?")
+            raise
+    else:
+        parent_module = import_string(f"{base_module.__name__}.plugins.filter")
+
+    for module in iter_modules(parent_module.__path__):
+        filter_module = import_string(f"{parent_module.__name__}.{module.name}")
+        yield filter_module.FilterModule().filters()
+
+
+def _load_ansible_filters(collections=None):
     try:
-        import ansible.plugins.filter
+        import ansible
     except ImportError:
         print("This feature requires the `ansible-core` package.")
         raise
 
     filters = dict()
-    for module in iter_modules(ansible.plugins.filter.__path__):
-        filter_module = import_string(f"ansible.plugins.filter.{module.name}")
-        filters.update(filter_module.FilterModule().filters())
+    for filter in _ansible_filter_loader(ansible):
+        filters.update(filter)
+
+    if collections is None:
+        return filters
+
+    collections_paths = os.environ.get("ANSIBLE_COLLECTIONS") or \
+            f"{os.path.expanduser('~/.ansible/collections')}:/usr/share/ansible/collections"
+    sys.path.extend(collections_paths.split(':'))
+    try:
+        import ansible_collections
+    except ImportError:
+        print("Could not find the `ansible_collections` module, please check the ANSIBLE_COLLECTIONS environment variable.")
+        raise
+
+    for collection in collections:
+        for filter in _ansible_filter_loader(ansible_collections, collection):
+            filters.update(filter)
 
     return filters
 
 
-def render(template_path, data, extensions, strict=False, ansible=False):
+def render(template_path, data, extensions, strict=False, ansible=None):
     from jinja2 import (
         __version__ as jinja_version,
         Environment,
@@ -265,7 +295,9 @@ def render(template_path, data, extensions, strict=False, ansible=False):
     if strict:
         env.undefined = StrictUndefined
     if ansible:
-        env.filters.update(_load_ansible_filters())
+        collections = set(ansible)
+        collections.discard('core') # only used because optparse doesn't support 0+ values
+        env.filters.update(_load_ansible_filters(collections))
 
     # Add environ global
     env.globals["environ"] = lambda key: force_text(os.environ.get(key))
@@ -445,9 +477,10 @@ def main():
     parser.add_option(
         "-a",
         "--ansible",
-        help="Enable support for Ansible filters",
+        help="Enable support for Ansible filters (--ansible core or --ansible <collection>)",
         dest="ansible",
-        action="store_true",
+        action="append",
+        default=[],
     )
     parser.add_option(
         "-o",
