@@ -221,9 +221,21 @@ formats = {
 
 
 def _load_ansible_filters():
-    from ansible.plugins.filter.core import FilterModule
+    from pkgutil import iter_modules
+    from jinja2.utils import import_string
 
-    return FilterModule().filters()
+    try:
+        import ansible.plugins.filter
+    except ImportError:
+        print("This feature requires the `ansible-core` package.")
+        raise
+
+    filters = dict()
+    for module in iter_modules(ansible.plugins.filter.__path__):
+        filter_module = import_string(f"ansible.plugins.filter.{module.name}")
+        filters.update(filter_module.FilterModule().filters())
+
+    return filters
 
 
 def render(template_path, data, extensions, strict=False, ansible=False):
