@@ -33,6 +33,8 @@ setup(
         "toml": install_requires + ["toml"],
         "xml": install_requires + ["xmltodict"],
         "tests": install_requires + tests_requires,
+        "hjson": install_requires + ["hjson"],
+        "json5": install_requires + ["json5"],
     },
     tests_require=tests_requires,
     include_package_data=True,
