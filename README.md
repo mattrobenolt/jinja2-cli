@@ -43,6 +43,16 @@ If `xmltodict` is present, you can use XML as an input data source.
 
 `$ pip install jinja2-cli[xml]`
 
+## Optional HJSON support
+If `hjson` is present, you can use HJSON as an input data source.
+
+`$ pip install jinja2-cli[hjson]`
+
+## Optional JSON5 support
+If `json5` is present, you can use JSON5 as an input data source.
+
+`$ pip install jinja2-cli[json5]`
+
 ## TODO
  * Variable inheritance and overrides
   * Tests!

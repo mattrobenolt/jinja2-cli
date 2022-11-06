@@ -69,6 +69,14 @@ class MalformedEnv(InvalidDataFormat):
     pass
 
 
+class MalformedHJSON(InvalidDataFormat):
+    pass
+
+
+class MalformedJSON5(InvalidDataFormat):
+    pass
+
+
 def get_format(fmt):
     try:
         return formats[fmt]()
@@ -206,6 +214,18 @@ def _load_env():
     return _parse_env, Exception, MalformedEnv
 
 
+def _load_hjson():
+    import hjson
+
+    return hjson.loads, Exception, MalformedHJSON
+
+
+def _load_json5():
+    import json5
+
+    return json5.loads, Exception, MalformedJSON5
+
+
 # Global list of available format parsers on your system
 # mapped to the callable/Exception to parse a string into a dict
 formats = {
@@ -217,6 +237,8 @@ formats = {
     "toml": _load_toml,
     "xml": _load_xml,
     "env": _load_env,
+    "hjson": _load_hjson,
+    "json5": _load_json5,
 }
 
 
@@ -299,6 +321,10 @@ def cli(opts, args):
                 raise InvalidDataFormat("toml: install toml to fix")
             if format == "xml":
                 raise InvalidDataFormat("xml: install xmltodict to fix")
+            if format == "hjson":
+                raise InvalidDataFormat("hjson: install hjson to fix")
+            if format == "json5":
+                raise InvalidDataFormat("json5: install json5 to fix")
             raise
         try:
             data = fn(data) or {}
