@@ -411,7 +411,8 @@ class LazyOptionParser(OptionParser):
 
 def main():
     parser = LazyOptionParser(
-        usage="usage: %prog [options] <input template> <input data>"
+        usage="usage: %prog [options] <input template> <input data>",
+        epilog="The input data can also be provided by stdin, e.g.: cat <input data> | jinja2 <input template>"
     )
     parser.add_option(
         "-f",
