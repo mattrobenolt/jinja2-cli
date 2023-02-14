@@ -414,6 +414,7 @@ def main():
         usage="usage: %prog [options] <input template> <input data>"
     )
     parser.add_option(
+        "-f",
         "--format",
         help=lambda: "format of input variables: %s"
         % ", ".join(sorted(list(get_available_formats()))),
