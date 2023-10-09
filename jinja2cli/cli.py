@@ -138,7 +138,7 @@ def _load_ini():
 
 
 def _load_yaml():
-    from yaml import load, YAMLError
+    from yaml import YAMLError, load
 
     try:
         from yaml import CSafeLoader as SafeLoader
@@ -165,7 +165,11 @@ def _load_querystring():
         """
         dict_ = {}
         for k, v in urlparse.parse_qs(data).items():
-            v = map(lambda x: x.strip(), v)
+            # Changed:
+            # v = map(lambda x: x.strip(), v)
+            # Reason:
+            # >>> TypeError: object of type map has no len()
+            v = list(map(lambda x: x.strip(), v))
             v = v[0] if len(v) == 1 else v
             if "." in k:
                 pieces = k.split(".")
@@ -191,6 +195,7 @@ def _load_toml():
 
 def _load_xml():
     import xml
+
     import xmltodict
 
     return xmltodict.parse, xml.parsers.expat.ExpatError, MalformedXML
@@ -243,12 +248,8 @@ formats = {
 
 
 def render(template_path, data, extensions, strict=False):
-    from jinja2 import (
-        __version__ as jinja_version,
-        Environment,
-        FileSystemLoader,
-        StrictUndefined,
-    )
+    from jinja2 import Environment, FileSystemLoader, StrictUndefined
+    from jinja2 import __version__ as jinja_version
 
     # Starting with jinja2 3.1, `with_` and `autoescape` are no longer
     # able to be imported, but since they were default, let's stub them back
@@ -404,6 +405,7 @@ class LazyOptionParser(OptionParser):
 
     def get_version(self):
         from jinja2 import __version__ as jinja_version
+
         from jinja2cli import __version__
 
         return "jinja2-cli v%s\n - Jinja2 v%s" % (__version__, jinja_version)
