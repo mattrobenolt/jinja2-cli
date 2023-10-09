@@ -165,7 +165,7 @@ def _load_querystring():
         """
         dict_ = {}
         for k, v in urlparse.parse_qs(data).items():
-            v = map(lambda x: x.strip(), v)
+            v = list(map(lambda x: x.strip(), v))
             v = v[0] if len(v) == 1 else v
             if "." in k:
                 pieces = k.split(".")
