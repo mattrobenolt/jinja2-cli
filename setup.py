@@ -29,6 +29,7 @@ setup(
     license="BSD",
     install_requires=install_requires,
     extras_require={
+        "ansible": install_requires + ["ansible-core"],
         "yaml": install_requires + ["pyyaml"],
         "toml": install_requires + ["toml"],
         "xml": install_requires + ["xmltodict"],
