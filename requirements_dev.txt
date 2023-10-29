@@ -1,0 +1,8 @@
+-e git+https://github.com/mattrobenolt/jinja2-cli.git#egg=jinja2_cli
+pytest
+schema
+toml
+pyyaml
+xmltodict
+json5
+hjson; python_version > '2.7'

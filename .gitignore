@@ -35,3 +35,6 @@ nosetests.xml
 
 .pytest_cache
 dist/
+
+.python-version
+*.txt
