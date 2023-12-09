@@ -1,5 +1,5 @@
 test:
-	pytest -v
+	tox
 
 publish: clean
 	python setup.py sdist bdist_wheel
@@ -7,5 +7,6 @@ publish: clean
 
 clean:
 	rm -rf *.egg-info *.egg dist build .pytest_cache
+	rm -rf .tox/py* .tox/dist/*
 
 .PHONY: test publish clean
