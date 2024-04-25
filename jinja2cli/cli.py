@@ -242,7 +242,7 @@ formats = {
 }
 
 
-def render(template_path, data, extensions, strict=False):
+def render(template_path, data, extensions, strict=False, trim_blocks=False, lstrip_blocks=False):
     from jinja2 import (
         __version__ as jinja_version,
         Environment,
@@ -265,6 +265,8 @@ def render(template_path, data, extensions, strict=False):
         loader=FileSystemLoader(os.path.dirname(template_path)),
         extensions=extensions,
         keep_trailing_newline=True,
+        trim_blocks=trim_blocks,
+        lstrip_blocks=lstrip_blocks,
     )
     if strict:
         env.undefined = StrictUndefined
@@ -362,7 +364,7 @@ def cli(opts, args):
 
         out = codecs.getwriter("utf8")(out)
 
-    out.write(render(template_path, data, extensions, opts.strict))
+    out.write(render(template_path, data, extensions, opts.strict, opts.trim_blocks, opts.lstrip_blocks))
     out.flush()
     return 0
 
@@ -456,6 +458,18 @@ def main():
         dest="outfile",
         metavar="FILE",
         action="store",
+    )
+    parser.add_option(
+        "--trim-blocks",
+        help="Trim first newline after a block",
+        dest="trim_blocks",
+        action="store_true",
+    )
+    parser.add_option(
+        "--lstrip-blocks",
+        help="Strip first newline after a block",
+        dest="lstrip_blocks",
+        action="store_true",
     )
     opts, args = parser.parse_args()
 
