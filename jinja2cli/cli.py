@@ -370,11 +370,12 @@ def cli(opts, args):
 def parse_kv_string(pairs):
     dict_ = {}
     for pair in pairs:
-        if "=" not in pair:
-            dict_[force_text(pair)] = None
-            continue
-        k, v = pair.split("=", 1)
-        dict_[force_text(k)] = force_text(v)
+        pair = force_text(pair)
+        try:
+            k, v = pair.split("=", 1)
+        except ValueError:
+            k, v = pair, None
+        dict_[k] = v
     return dict_
 
 
