@@ -11,6 +11,7 @@ warnings.filterwarnings("ignore")
 
 import os
 import sys
+import ast
 from optparse import Option, OptionParser
 
 sys.path.insert(0, os.getcwd())
@@ -273,7 +274,26 @@ def render(template_path, data, extensions, strict=False):
     env.globals["environ"] = lambda key: force_text(os.environ.get(key))
     env.globals["get_context"] = lambda: data
 
-    return env.get_template(os.path.basename(template_path)).render(data)
+    # parse ansible jinja2 overrides
+    JINJA2_OVERRIDE = '#jinja2:'
+    with open(template_path, 'r') as f:
+        template = f.read()
+        if template.startswith(JINJA2_OVERRIDE):
+            eol = template.find('\n')
+            line = template[len(JINJA2_OVERRIDE):eol]
+            template = template[eol + 1:]
+            for pair in line.split(','):
+                if ':' not in pair:
+                    raise RuntimeError("failed to parse jinja2 override '%s'."
+                                       " Did you use something different from colon as key-value separator?" % pair.strip())
+                (key, val) = pair.split(':', 1)
+                key = key.strip()
+                if hasattr(env, key):
+                    setattr(env, key, ast.literal_eval(val.strip()))
+                else:
+                    print(f"Could not find Jinja2 environment setting to override: '{key}'", file=sys.stderr)
+
+        return env.from_string(template).render(data)
 
 
 def is_fd_alive(fd):
