@@ -311,12 +311,12 @@ def cli(opts, args):
                     format = ext
                 else:
                     raise InvalidDataFormat(ext)
-    
+
             with open(path) as fp:
                 data = fp.read()
-    
+
         template_path = os.path.abspath(template_path)
-    
+
         if data:
             try:
                 fn, except_exc, raise_exc = get_format(format)
@@ -478,7 +478,7 @@ def main():
     # Dedupe list
     opts.extensions = set(opts.extensions)
 
-    if len(args) == 0:
+    if len(args) == 0 and not opts.stream:
         parser.print_help()
         sys.exit(1)
 
