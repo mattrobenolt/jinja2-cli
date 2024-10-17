@@ -131,7 +131,7 @@ def _load_ini():
                 return d
 
         p = MyConfigParser()
-        p.readfp(StringIO(data))
+        p.read_file(StringIO(data))
         return p.as_dict()
 
     return _parse_ini, ConfigParser.Error, MalformedINI
