@@ -131,7 +131,11 @@ def _load_ini():
                 return d
 
         p = MyConfigParser()
-        p.readfp(StringIO(data))
+        try:
+            reader = p.readfp
+        except AttributeError:
+            reader = p.read_file
+        reader(StringIO(data))
         return p.as_dict()
 
     return _parse_ini, ConfigParser.Error, MalformedINI
@@ -370,8 +374,12 @@ def cli(opts, args):
 def parse_kv_string(pairs):
     dict_ = {}
     for pair in pairs:
-        k, v = pair.split("=", 1)
-        dict_[force_text(k)] = force_text(v)
+        pair = force_text(pair)
+        try:
+            k, v = pair.split("=", 1)
+        except ValueError:
+            k, v = pair, None
+        dict_[k] = v
     return dict_
 
 
