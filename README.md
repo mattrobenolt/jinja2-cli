@@ -5,6 +5,7 @@ $ jinja2 helloworld.tmpl data.json --format=json
 $ cat data.json | jinja2 helloworld.tmpl
 $ curl -s http://httpbin.org/ip | jinja2 helloip.tmpl
 $ curl -s http://httpbin.org/ip | jinja2 helloip.tmpl > helloip.html
+$ JINJA_INPUT_DATA_PATH=payload.json jinja2 helloworld.tmpl
 ```
 
 ## Install
@@ -26,6 +27,15 @@ Options:
                         Use only this section from the configuration
   --strict              Disallow undefined variables to be used within the
                         template
+```
+
+## Reading input data path from environment variable
+
+Set the value of the environment variable `JINJA_INPUT_DATA_PATH` to the path to your input data.
+This way the input data get read from there and you don't have to specify it on the command line:
+
+```
+JINJA_INPUT_DATA_PATH=payload.json jinja2 helloworld.tmpl
 ```
 
 ## Optional YAML support

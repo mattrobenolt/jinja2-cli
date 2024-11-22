@@ -291,7 +291,7 @@ def is_fd_alive(fd):
 def cli(opts, args):
     template_path, data = args
     format = opts.format
-    if data in ("-", ""):
+    if data in ("-", "") and not "JINJA_INPUT_DATA_PATH" in os.environ:
         if data == "-" or (data == "" and is_fd_alive(sys.stdin)):
             data = sys.stdin.read()
         if format == "auto":
@@ -302,7 +302,7 @@ def cli(opts, args):
             else:
                 format = "json"
     else:
-        path = os.path.join(os.getcwd(), os.path.expanduser(data))
+        path = os.path.join(os.environ["JINJA_INPUT_DATA_PATH"]) if "JINJA_INPUT_DATA_PATH" in os.environ else os.path.join(os.getcwd(), os.path.expanduser(data))
         if format == "auto":
             ext = os.path.splitext(path)[1][1:]
             if has_format(ext):
