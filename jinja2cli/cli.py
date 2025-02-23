@@ -289,53 +289,57 @@ def is_fd_alive(fd):
 
 
 def cli(opts, args):
-    template_path, data = args
+    template_path = args.pop(0)
     format = opts.format
-    if data in ("-", ""):
-        if data == "-" or (data == "" and is_fd_alive(sys.stdin)):
-            data = sys.stdin.read()
-        if format == "auto":
+
+    if len(args) == 0:
+        args.append("-")
+
+    data = {}
+    for filename in args:
+        if filename == "-" and is_fd_alive(sys.stdin):
+            data_in = sys.stdin.read()
             # default to yaml first if available since yaml
             # is a superset of json
             if has_format("yaml"):
-                format = "yaml"
+                data_format = "yaml"
             else:
-                format = "json"
-    else:
-        path = os.path.join(os.getcwd(), os.path.expanduser(data))
-        if format == "auto":
-            ext = os.path.splitext(path)[1][1:]
-            if has_format(ext):
-                format = ext
+                data_format = "json"
+        else:
+            path = os.path.join(os.getcwd(), os.path.expanduser(filename))
+            if format == "auto":
+                ext = os.path.splitext(path)[1][1:]
+                print(f"auto format is {ext}")
+                if has_format(ext):
+                    data_format = ext
+                else:
+                    raise InvalidDataFormat(ext)
             else:
-                raise InvalidDataFormat(ext)
+                data_format = format
 
-        with open(path) as fp:
-            data = fp.read()
+            with open(path) as fp:
+                data_in = fp.read()
 
-    template_path = os.path.abspath(template_path)
-
-    if data:
-        try:
-            fn, except_exc, raise_exc = get_format(format)
-        except InvalidDataFormat:
-            if format in ("yml", "yaml"):
-                raise InvalidDataFormat("%s: install pyyaml to fix" % format)
-            if format == "toml":
-                raise InvalidDataFormat("toml: install toml to fix")
-            if format == "xml":
-                raise InvalidDataFormat("xml: install xmltodict to fix")
-            if format == "hjson":
-                raise InvalidDataFormat("hjson: install hjson to fix")
-            if format == "json5":
-                raise InvalidDataFormat("json5: install json5 to fix")
-            raise
-        try:
-            data = fn(data) or {}
-        except except_exc:
-            raise raise_exc("%s ..." % data[:60])
-    else:
-        data = {}
+        template_path = os.path.abspath(template_path)
+        if data_in:
+            try:
+                fn, except_exc, raise_exc = get_format(data_format)
+            except InvalidDataFormat:
+                if data_format in ("yml", "yaml"):
+                    raise InvalidDataFormat("%s: install pyyaml to fix" % data_format)
+                if data_format == "toml":
+                    raise InvalidDataFormat("toml: install toml to fix")
+                if data_format == "xml":
+                    raise InvalidDataFormat("xml: install xmltodict to fix")
+                if data_format == "hjson":
+                    raise InvalidDataFormat("hjson: install hjson to fix")
+                if data_format == "json5":
+                    raise InvalidDataFormat("json5: install json5 to fix")
+                raise
+            try:
+                data.update(fn(data_in) or {})
+            except except_exc:
+                raise raise_exc("%s ..." % data_in[:60])
 
     extensions = []
     for ext in opts.extensions:
