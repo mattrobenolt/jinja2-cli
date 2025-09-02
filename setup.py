@@ -30,7 +30,7 @@ setup(
     install_requires=install_requires,
     extras_require={
         "yaml": install_requires + ["pyyaml"],
-        "toml": install_requires + ["toml"],
+        "toml": install_requires + ["tomli;python_version<'3.11'"],
         "xml": install_requires + ["xmltodict"],
         "tests": install_requires + tests_requires,
         "hjson": install_requires + ["hjson"],
