@@ -188,9 +188,12 @@ def _load_querystring():
 
 
 def _load_toml():
-    import toml
+    if sys.version_info < (3, 11):
+        import tomli as tomllib
+    else:
+        import tomllib
 
-    return toml.loads, Exception, MalformedToml
+    return tomllib.loads, Exception, MalformedToml
 
 
 def _load_xml():
