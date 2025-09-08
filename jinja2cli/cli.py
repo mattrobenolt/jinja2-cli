@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 jinja2-cli
 ==========
@@ -415,9 +417,11 @@ class LazyOptionParser(OptionParser):
 
     def get_version(self):
         from jinja2 import __version__ as jinja_version
-        from jinja2cli import __version__
-
-        return "jinja2-cli v%s\n - Jinja2 v%s" % (__version__, jinja_version)
+        try:
+            from jinja2cli import __version__
+            return "jinja2-cli v%s\n - Jinja2 v%s" % (__version__, jinja_version)
+        except ImportError:
+            return "jinja2-cli\n - Jinja2 v%s" % (jinja_version)
 
 
 def main():
