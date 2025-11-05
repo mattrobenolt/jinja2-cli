@@ -1,0 +1,11 @@
+{% macro bold(text) -%}
+**{{ text }}**
+{%- endmacro -%}
+{% from "macros_lib/formatting.j2" import greeting, bullet_list, emphasize, code -%}
+{{ bold(title) }}
+
+{{ greeting(name) }}
+{{ bullet_list(items) }}
+
+{{ emphasize(subtitle) }}
+{{ code(language) }}

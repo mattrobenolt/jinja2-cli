@@ -252,9 +252,10 @@ formats = {
 def render(template_path, data, extensions, strict=False):
     from jinja2 import (
         __version__ as jinja_version,
+        BaseLoader,
         Environment,
-        FileSystemLoader,
         StrictUndefined,
+        TemplateNotFound,
     )
 
     # Starting with jinja2 3.1, `with_` and `autoescape` are no longer
@@ -268,8 +269,46 @@ def render(template_path, data, extensions, strict=False):
             if ext not in extensions:
                 extensions.append(ext)
 
+    # Custom loader that allows safe ../ traversal
+    class SafeRelativeLoader(BaseLoader):
+        """Allows ../ in imports while restricting access to project root."""
+        
+        def __init__(self, template_dir, cwd):
+            # Resolve symlinks for consistent path comparison
+            self.template_dir = os.path.realpath(os.path.abspath(template_dir))
+            self.cwd = os.path.realpath(os.path.abspath(cwd))
+            self.root = os.path.commonpath([self.template_dir, self.cwd])
+        
+        def _is_safe(self, path):
+            """Check if path is within security boundary."""
+            real_path = os.path.realpath(os.path.abspath(path))
+            try:
+                os.path.relpath(real_path, self.root)
+                return real_path.startswith(self.root + os.sep) or real_path == self.root
+            except ValueError:
+                return False  # Different drives on Windows
+        
+        def _try_load(self, path):
+            """Try to load a template file if it exists and is safe."""
+            if self._is_safe(path) and os.path.isfile(path):
+                mtime = os.path.getmtime(path)
+                with open(path, encoding='utf-8') as f:
+                    source = f.read()
+                return source, path, lambda: mtime == os.path.getmtime(path)
+            return None
+        
+        def get_source(self, environment, template):
+            # Try resolving relative to template directory, then cwd, then root
+            for base in (self.template_dir, self.cwd, self.root):
+                result = self._try_load(os.path.normpath(os.path.join(base, template)))
+                if result:
+                    return result
+            raise TemplateNotFound(template)
+
+    # Setup the environment
+    template_dir = os.path.dirname(template_path) or "."
     env = Environment(
-        loader=FileSystemLoader(os.path.dirname(template_path)),
+        loader=SafeRelativeLoader(template_dir, os.getcwd()),
         extensions=extensions,
         keep_trailing_newline=True,
     )

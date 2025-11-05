@@ -1,0 +1,17 @@
+{% macro greeting(name) -%}
+Hello, {{ name }}!
+{%- endmacro %}
+
+{% macro bullet_list(items) -%}
+{%- for item in items %}
+- {{ item }}
+{%- endfor %}
+{%- endmacro %}
+
+{% macro emphasize(text) -%}
+*{{ text }}*
+{%- endmacro %}
+
+{% macro code(value) -%}
+`{{ value }}`
+{%- endmacro %}
