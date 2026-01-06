@@ -219,6 +219,18 @@ def render(
     data: dict,
     extensions: List[ExtensionSpec],
     strict: bool = False,
+    trim_blocks: bool = False,
+    lstrip_blocks: bool = False,
+    autoescape: bool = False,
+    variable_start_string: Optional[str] = None,
+    variable_end_string: Optional[str] = None,
+    block_start_string: Optional[str] = None,
+    block_end_string: Optional[str] = None,
+    comment_start_string: Optional[str] = None,
+    comment_end_string: Optional[str] = None,
+    line_statement_prefix: Optional[str] = None,
+    line_comment_prefix: Optional[str] = None,
+    newline_sequence: Optional[str] = None,
 ) -> str:
     from jinja2 import (
         Environment,
@@ -240,11 +252,35 @@ def render(
             if ext not in extensions:
                 extensions.append(ext)
 
-    env = Environment(
-        loader=FileSystemLoader(os.path.dirname(template_path)),
-        extensions=extensions,
-        keep_trailing_newline=True,
-    )
+    env_kwargs: dict = {
+        "loader": FileSystemLoader(os.path.dirname(template_path)),
+        "extensions": extensions,
+        "keep_trailing_newline": True,
+        "trim_blocks": trim_blocks,
+        "lstrip_blocks": lstrip_blocks,
+    }
+    if autoescape:
+        env_kwargs["autoescape"] = True
+    if variable_start_string is not None:
+        env_kwargs["variable_start_string"] = variable_start_string
+    if variable_end_string is not None:
+        env_kwargs["variable_end_string"] = variable_end_string
+    if block_start_string is not None:
+        env_kwargs["block_start_string"] = block_start_string
+    if block_end_string is not None:
+        env_kwargs["block_end_string"] = block_end_string
+    if comment_start_string is not None:
+        env_kwargs["comment_start_string"] = comment_start_string
+    if comment_end_string is not None:
+        env_kwargs["comment_end_string"] = comment_end_string
+    if line_statement_prefix is not None:
+        env_kwargs["line_statement_prefix"] = line_statement_prefix
+    if line_comment_prefix is not None:
+        env_kwargs["line_comment_prefix"] = line_comment_prefix
+    if newline_sequence is not None:
+        env_kwargs["newline_sequence"] = newline_sequence
+
+    env = Environment(**env_kwargs)
     if strict:
         env.undefined = StrictUndefined
 
@@ -378,7 +414,26 @@ def cli(opts: argparse.Namespace, args: Sequence[str]) -> int:
     else:
         out = open(opts.outfile, "w")
 
-    out.write(render(template_path, data, extensions, opts.strict))
+    out.write(
+        render(
+            template_path,
+            data,
+            extensions,
+            opts.strict,
+            trim_blocks=opts.trim_blocks,
+            lstrip_blocks=opts.lstrip_blocks,
+            autoescape=opts.autoescape,
+            variable_start_string=opts.variable_start,
+            variable_end_string=opts.variable_end,
+            block_start_string=opts.block_start,
+            block_end_string=opts.block_end,
+            comment_start_string=opts.comment_start,
+            comment_end_string=opts.comment_end,
+            line_statement_prefix=opts.line_statement_prefix,
+            line_comment_prefix=opts.line_comment_prefix,
+            newline_sequence=opts.newline_sequence,
+        )
+    )
     out.flush()
     return 0
 
@@ -472,12 +527,74 @@ def main() -> None:
         dest="outfile",
         metavar="FILE",
     )
+    parser.add_argument(
+        "--trim-blocks",
+        help="Trim first newline after a block",
+        dest="trim_blocks",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--lstrip-blocks",
+        help="Strip leading spaces and tabs from block start",
+        dest="lstrip_blocks",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--autoescape",
+        help="Enable autoescape",
+        dest="autoescape",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--variable-start",
+        help="Variable start string",
+        dest="variable_start",
+    )
+    parser.add_argument(
+        "--variable-end",
+        help="Variable end string",
+        dest="variable_end",
+    )
+    parser.add_argument(
+        "--block-start",
+        help="Block start string",
+        dest="block_start",
+    )
+    parser.add_argument(
+        "--block-end",
+        help="Block end string",
+        dest="block_end",
+    )
+    parser.add_argument(
+        "--comment-start",
+        help="Comment start string",
+        dest="comment_start",
+    )
+    parser.add_argument(
+        "--comment-end",
+        help="Comment end string",
+        dest="comment_end",
+    )
+    parser.add_argument(
+        "--line-statement-prefix",
+        help="Line statement prefix",
+        dest="line_statement_prefix",
+    )
+    parser.add_argument(
+        "--line-comment-prefix",
+        help="Line comment prefix",
+        dest="line_comment_prefix",
+    )
+    parser.add_argument(
+        "--newline-sequence",
+        help='Newline sequence (e.g., "\\n" or "\\r\\n")',
+        dest="newline_sequence",
+    )
     parser.add_argument("template", nargs="?", help=argparse.SUPPRESS)
     parser.add_argument("data", nargs="?", help=argparse.SUPPRESS)
     opts = parser.parse_args()
     args = [value for value in (opts.template, opts.data) if value is not None]
 
-    # Dedupe list
     opts.extensions = set(opts.extensions)
 
     if len(args) == 0:
