@@ -30,4 +30,4 @@ publish: build
     uv publish
 
 clean:
-    rm -rf *.egg-info *.egg dist build .pytest_cache .ruff_cache
+    rm -rf dist .pytest_cache .ruff_cache

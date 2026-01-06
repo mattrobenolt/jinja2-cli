@@ -5,6 +5,7 @@ helpers_dir="${BATS_TEST_DIRNAME}/../helpers"
 formats_dir="${fixtures_dir}/formats"
 unicode_dir="${fixtures_dir}/unicode"
 extensions_dir="${fixtures_dir}/extensions"
+env_opts_dir="${fixtures_dir}/env_opts"
 
 require_module() {
     if ! uv run python "$helpers_dir/has_module.py" "$1"; then
@@ -91,6 +92,34 @@ require_toml() {
 
     [ "$status" -eq 0 ]
     [ "$output" = "Hello Matt" ]
+}
+
+@test "trim blocks" {
+    run uv run jinja2 "$env_opts_dir/trim_blocks.j2" "$env_opts_dir/empty.json" --format json --trim-blocks
+
+    [ "$status" -eq 0 ]
+    [ "$output" = "foo" ]
+}
+
+@test "lstrip blocks" {
+    run uv run jinja2 "$env_opts_dir/lstrip_blocks.j2" "$env_opts_dir/empty.json" --format json --lstrip-blocks
+
+    [ "$status" -eq 0 ]
+    [ "$output" = "foo" ]
+}
+
+@test "custom variable delimiters" {
+    run uv run jinja2 "$env_opts_dir/variable_delims.j2" "$formats_dir/data.json" --format json --variable-start "<<" --variable-end ">>"
+
+    [ "$status" -eq 0 ]
+    [ "$output" = "Hello Matt" ]
+}
+
+@test "line statement prefix" {
+    run uv run jinja2 "$env_opts_dir/line_statement.j2" "$env_opts_dir/empty.json" --format json --line-statement-prefix "%"
+
+    [ "$status" -eq 0 ]
+    [ "$output" = "Hello" ]
 }
 
 @test "loads local extension from cwd" {
