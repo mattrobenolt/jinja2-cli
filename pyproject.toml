@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = { file = "LICENSE" }
 authors = [{ name = "Matt Robenolt", email = "m@robenolt.com" }]
-dependencies = ["jinja2"]
+dependencies = ["jinja2>=3.1"]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",

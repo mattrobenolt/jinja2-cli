@@ -120,7 +120,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "hjson", marker = "extra == 'hjson'" },
-    { name = "jinja2" },
+    { name = "jinja2", specifier = ">=3.1" },
     { name = "json5", marker = "extra == 'json5'" },
     { name = "pytest", marker = "extra == 'tests'" },
     { name = "pyyaml", marker = "extra == 'yaml'" },
