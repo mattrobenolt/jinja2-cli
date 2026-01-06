@@ -6,6 +6,12 @@ License: BSD, see LICENSE for more details.
 """
 
 __author__ = "Matt Robenolt"
-__version__ = "0.8.2"
+
+from importlib.metadata import PackageNotFoundError, version
+
+try:
+    __version__ = version("jinja2-cli")
+except PackageNotFoundError:
+    __version__ = "dev"
 
 from .cli import main  # NOQA

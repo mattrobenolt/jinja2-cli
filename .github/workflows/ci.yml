@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+    steps:
+      - uses: actions/checkout@v6
+      - uses: extractions/setup-just@v3
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache-python: true
+      - name: Install bats
+        uses: bats-core/bats-action@v3
+      - name: Install dependencies
+        run: just sync
+      - name: Run tests
+        run: just test
+      - name: Run bats
+        run: just bats
+      - name: Lint
+        run: just lint

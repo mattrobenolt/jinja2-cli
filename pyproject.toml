@@ -1,0 +1,56 @@
+[project]
+name = "jinja2-cli"
+version = "1.0.0b1"
+description = "A CLI interface to Jinja2"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { file = "LICENSE" }
+authors = [{ name = "Matt Robenolt", email = "m@robenolt.com" }]
+dependencies = ["jinja2"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "License :: OSI Approved :: BSD License",
+  "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/mattrobenolt/jinja2-cli"
+Issues = "https://github.com/mattrobenolt/jinja2-cli/issues"
+
+[project.scripts]
+jinja2 = "jinja2cli:main"
+
+[project.optional-dependencies]
+yaml = ["pyyaml"]
+toml = ["tomli; python_version < '3.11'"]
+xml = ["xmltodict"]
+hjson = ["hjson"]
+json5 = ["json5"]
+tests = ["pytest", "ruff"]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff",
+    "ty",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.21,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "jinja2cli"
+module-root = ""
+source-include = ["README.md", "LICENSE"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py37"

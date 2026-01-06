@@ -12,7 +12,7 @@ def test_relative_path():
     title = b"\xc3\xb8".decode("utf8")
     output = cli.render(path, {"title": title}, [])
     assert output == title
-    assert type(output) == cli.text_type
+    assert isinstance(output, str)
 
 
 def test_absolute_path():
@@ -22,4 +22,4 @@ def test_absolute_path():
     title = b"\xc3\xb8".decode("utf8")
     output = cli.render(path, {"title": title}, [])
     assert output == title
-    assert type(output) == cli.text_type
+    assert isinstance(output, str)

@@ -5,32 +5,13 @@ jinja2-cli
 License: BSD, see LICENSE for more details.
 """
 
-import warnings
-
-warnings.filterwarnings("ignore")
-
+import argparse
+import importlib
+import importlib.util
 import os
 import sys
-from optparse import Option, OptionParser
-
-sys.path.insert(0, os.getcwd())
-
-PY3 = sys.version_info[0] == 3
-
-if PY3:
-    text_type = str
-    bytes_type = bytes
-else:
-    text_type = unicode  # NOQA
-    bytes_type = str  # NOQA
-
-
-def force_text(data):
-    if isinstance(data, text_type):
-        return data
-    if isinstance(data, bytes_type):
-        return data.decode("utf8")
-    return data
+from types import ModuleType
+from typing import Any, Callable, Iterable, Iterator, List, Optional, Sequence, Tuple, Type, Union
 
 
 class InvalidDataFormat(Exception):
@@ -77,14 +58,19 @@ class MalformedJSON5(InvalidDataFormat):
     pass
 
 
-def get_format(fmt):
+ParserFn = Callable[[str], Any]
+FormatLoadResult = Tuple[ParserFn, Type[Exception], Type[Exception]]
+ExtensionSpec = Union[str, ModuleType, Type[Any]]
+
+
+def get_format(fmt: str) -> FormatLoadResult:
     try:
         return formats[fmt]()
     except ImportError:
         raise InvalidDataFormat(fmt)
 
 
-def has_format(fmt):
+def has_format(fmt: str) -> bool:
     try:
         get_format(fmt)
         return True
@@ -92,83 +78,61 @@ def has_format(fmt):
         return False
 
 
-def get_available_formats():
+def get_available_formats() -> Iterator[str]:
     for fmt in formats.keys():
         if has_format(fmt):
             yield fmt
     yield "auto"
 
 
-def _load_json():
-    try:
-        import json
+def _load_json() -> FormatLoadResult:
+    import json
 
-        return json.loads, ValueError, MalformedJSON
-    except ImportError:
-        import simplejson
-
-        return simplejson.loads, simplejson.decoder.JSONDecodeError, MalformedJSON
+    return json.loads, json.JSONDecodeError, MalformedJSON
 
 
-def _load_ini():
-    try:
-        import ConfigParser
-    except ImportError:
-        import configparser as ConfigParser
+def _load_ini() -> FormatLoadResult:
+    import configparser
 
-    def _parse_ini(data):
-        try:
-            from StringIO import StringIO
-        except ImportError:
-            from io import StringIO
+    def _parse_ini(data: str) -> dict:
+        from io import StringIO
 
-        class MyConfigParser(ConfigParser.ConfigParser):
-            def as_dict(self):
-                d = dict(self._sections)
-                for k in d:
-                    d[k] = dict(self._defaults, **d[k])
-                    d[k].pop("__name__", None)
-                return d
+        class MyConfigParser(configparser.ConfigParser):
+            def as_dict(self) -> dict:
+                return {section: dict(self.items(section, raw=True)) for section in self.sections()}
 
         p = MyConfigParser()
-        try:
-            reader = p.readfp
-        except AttributeError:
-            reader = p.read_file
-        reader(StringIO(data))
+        p.read_file(StringIO(data))
         return p.as_dict()
 
-    return _parse_ini, ConfigParser.Error, MalformedINI
+    return _parse_ini, configparser.Error, MalformedINI
 
 
-def _load_yaml():
-    from yaml import load, YAMLError
+def _load_yaml() -> FormatLoadResult:
+    from yaml import YAMLError, load
 
     try:
         from yaml import CSafeLoader as SafeLoader
     except ImportError:
         from yaml import SafeLoader
 
-    def yaml_loader(stream):
+    def yaml_loader(stream: str) -> Any:
         return load(stream, Loader=SafeLoader)
 
     return yaml_loader, YAMLError, MalformedYAML
 
 
-def _load_querystring():
-    try:
-        import urlparse
-    except ImportError:
-        import urllib.parse as urlparse
+def _load_querystring() -> FormatLoadResult:
+    from urllib.parse import parse_qs
 
-    def _parse_qs(data):
+    def _parse_qs(data: str) -> dict:
         """Extend urlparse to allow objects in dot syntax.
 
         >>> _parse_qs('user.first_name=Matt&user.last_name=Robenolt')
         {'user': {'first_name': 'Matt', 'last_name': 'Robenolt'}}
         """
         dict_ = {}
-        for k, v in urlparse.parse_qs(data).items():
+        for k, v in parse_qs(data).items():
             v = list(map(lambda x: x.strip(), v))
             v = v[0] if len(v) == 1 else v
             if "." in k:
@@ -181,30 +145,31 @@ def _load_querystring():
                         cur[piece] = v
                     cur = cur[piece]
             else:
-                dict_[force_text(k)] = force_text(v)
+                dict_[k] = v
         return dict_
 
     return _parse_qs, Exception, MalformedQuerystring
 
 
-def _load_toml():
+def _load_toml() -> FormatLoadResult:
     if sys.version_info < (3, 11):
-        import tomli as tomllib
+        import tomli as tomllib  # type: ignore[unresolved-import]
     else:
         import tomllib
 
     return tomllib.loads, Exception, MalformedToml
 
 
-def _load_xml():
-    import xml
+def _load_xml() -> FormatLoadResult:
+    from xml.parsers import expat
+
     import xmltodict
 
-    return xmltodict.parse, xml.parsers.expat.ExpatError, MalformedXML
+    return xmltodict.parse, expat.ExpatError, MalformedXML
 
 
-def _load_env():
-    def _parse_env(data):
+def _load_env() -> FormatLoadResult:
+    def _parse_env(data: str) -> dict:
         """
         Parse an envfile format of key=value pairs that are newline separated
         """
@@ -215,19 +180,19 @@ def _load_env():
             if not line or line[:1] == "#":
                 continue
             k, v = line.split("=", 1)
-            dict_[force_text(k)] = force_text(v)
+            dict_[k] = v
         return dict_
 
     return _parse_env, Exception, MalformedEnv
 
 
-def _load_hjson():
+def _load_hjson() -> FormatLoadResult:
     import hjson
 
     return hjson.loads, Exception, MalformedHJSON
 
 
-def _load_json5():
+def _load_json5() -> FormatLoadResult:
     import json5
 
     return json5.loads, Exception, MalformedJSON5
@@ -249,12 +214,19 @@ formats = {
 }
 
 
-def render(template_path, data, extensions, strict=False):
+def render(
+    template_path: str,
+    data: dict,
+    extensions: List[ExtensionSpec],
+    strict: bool = False,
+) -> str:
     from jinja2 import (
-        __version__ as jinja_version,
         Environment,
         FileSystemLoader,
         StrictUndefined,
+    )
+    from jinja2 import (
+        __version__ as jinja_version,
     )
 
     # Starting with jinja2 3.1, `with_` and `autoescape` are no longer
@@ -277,25 +249,67 @@ def render(template_path, data, extensions, strict=False):
         env.undefined = StrictUndefined
 
     # Add environ global
-    env.globals["environ"] = lambda key: force_text(os.environ.get(key))
+    env.globals["environ"] = lambda key: os.environ.get(key)
     env.globals["get_context"] = lambda: data
 
     return env.get_template(os.path.basename(template_path)).render(data)
 
 
-def is_fd_alive(fd):
-    if os.name == "nt":
-        return not os.isatty(fd.fileno())
-    import select
+def _split_extension_path(extension: str) -> Tuple[str, Optional[str]]:
+    if ":" in extension:
+        module_name, object_name = extension.split(":", 1)
+        return module_name, object_name or None
+    module_name, _, object_name = extension.rpartition(".")
+    if module_name:
+        return module_name, object_name or None
+    return extension, None
 
-    return bool(select.select([fd], [], [], 0)[0])
+
+def _load_local_module(module_name: str, base_dir: str) -> Optional[ModuleType]:
+    module_path = os.path.join(base_dir, *module_name.split("."))
+    for candidate in (module_path + ".py", os.path.join(module_path, "__init__.py")):
+        if not os.path.isfile(candidate):
+            continue
+        spec = importlib.util.spec_from_file_location(module_name, candidate)
+        if spec is None or spec.loader is None:
+            return None
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+        return module
+    return None
 
 
-def cli(opts, args):
+def _resolve_extension(extension: ExtensionSpec, base_dir: str) -> ExtensionSpec:
+    if not isinstance(extension, str):
+        return extension
+    if extension.startswith("jinja2.ext."):
+        return extension
+    module_name, object_name = _split_extension_path(extension)
+    if object_name:
+        if importlib.util.find_spec(module_name) is not None:
+            module = importlib.import_module(module_name)
+        else:
+            module = _load_local_module(module_name, base_dir)
+        if module is None:
+            raise ImportError("Cannot import %r" % module_name)
+        try:
+            return getattr(module, object_name)
+        except AttributeError as exc:
+            raise ImportError("Cannot import %r from %r" % (object_name, module_name)) from exc
+    if importlib.util.find_spec(module_name) is not None:
+        return extension
+    module = _load_local_module(module_name, base_dir)
+    if module is None:
+        return extension
+    return module
+
+
+def cli(opts: argparse.Namespace, args: Sequence[str]) -> int:
     template_path, data = args
     format = opts.format
     if data in ("-", ""):
-        if data == "-" or (data == "" and is_fd_alive(sys.stdin)):
+        if data == "-" or (data == "" and not sys.stdin.isatty()):
             data = sys.stdin.read()
         if format == "auto":
             # default to yaml first if available since yaml
@@ -325,7 +339,7 @@ def cli(opts, args):
             if format in ("yml", "yaml"):
                 raise InvalidDataFormat("%s: install pyyaml to fix" % format)
             if format == "toml":
-                raise InvalidDataFormat("toml: install toml to fix")
+                raise InvalidDataFormat("toml: install tomli to fix")
             if format == "xml":
                 raise InvalidDataFormat("xml: install xmltodict to fix")
             if format == "hjson":
@@ -344,9 +358,9 @@ def cli(opts, args):
     for ext in opts.extensions:
         # Allow shorthand and assume if it's not a module
         # path, it's probably trying to use builtin from jinja2
-        if "." not in ext:
+        if "." not in ext and ":" not in ext:
             ext = "jinja2.ext." + ext
-        extensions.append(ext)
+        extensions.append(_resolve_extension(ext, os.getcwd()))
 
     # Use only a specific section if needed
     if opts.section:
@@ -364,20 +378,14 @@ def cli(opts, args):
     else:
         out = open(opts.outfile, "w")
 
-    if not PY3:
-        import codecs
-
-        out = codecs.getwriter("utf8")(out)
-
     out.write(render(template_path, data, extensions, opts.strict))
     out.flush()
     return 0
 
 
-def parse_kv_string(pairs):
+def parse_kv_string(pairs: Iterable[str]) -> dict:
     dict_ = {}
     for pair in pairs:
-        pair = force_text(pair)
         try:
             k, v = pair.split("=", 1)
         except ValueError:
@@ -386,54 +394,51 @@ def parse_kv_string(pairs):
     return dict_
 
 
-class LazyHelpOption(Option):
-    "An Option class that resolves help from a callable"
-
-    def __setattr__(self, attr, value):
-        if attr == "help":
-            attr = "_help"
-        self.__dict__[attr] = value
-
-    @property
-    def help(self):
-        h = self._help
-        if callable(h):
-            h = h()
-        # Cache on the class to get rid of the @property
-        self.help = h
-        return h
+FORMAT_HELP_SENTINEL = "__JINJA2CLI_FORMAT_HELP__"
 
 
-class LazyOptionParser(OptionParser):
-    def __init__(self, **kwargs):
-        # Fake a version so we can lazy load it later.
-        # This is due to internals of OptionParser, but it's
-        # fine
-        kwargs["version"] = 1
-        kwargs["option_class"] = LazyHelpOption
-        OptionParser.__init__(self, **kwargs)
+class LazyFormatArgumentParser(argparse.ArgumentParser):
+    def format_help(self) -> str:
+        help_text = super().format_help()
+        if FORMAT_HELP_SENTINEL in help_text:
+            help_text = help_text.replace(
+                FORMAT_HELP_SENTINEL,
+                "format of input variables: %s" % ", ".join(sorted(list(get_available_formats()))),
+            )
+        return help_text
 
-    def get_version(self):
+
+class LazyVersionAction(argparse.Action):
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: Any,
+        option_string: Optional[str] = None,
+    ) -> None:
         from jinja2 import __version__ as jinja_version
+
         from jinja2cli import __version__
 
-        return "jinja2-cli v%s\n - Jinja2 v%s" % (__version__, jinja_version)
+        parser.exit(message="jinja2-cli v%s\n - Jinja2 v%s\n" % (__version__, jinja_version))
 
 
-def main():
-    parser = LazyOptionParser(
-        usage="usage: %prog [options] <input template> <input data>"
+def main() -> None:
+    parser = LazyFormatArgumentParser(usage="%(prog)s [options] <input template> <input data>")
+    parser.add_argument(
+        "--version",
+        action=LazyVersionAction,
+        nargs=0,
+        help="show program's version number and exit",
     )
-    parser.add_option(
+    parser.add_argument(
         "-f",
         "--format",
-        help=lambda: "format of input variables: %s"
-        % ", ".join(sorted(list(get_available_formats()))),
+        help=FORMAT_HELP_SENTINEL,
         dest="format",
-        action="store",
         default="auto",
     )
-    parser.add_option(
+    parser.add_argument(
         "-e",
         "--extension",
         help="extra jinja2 extensions to load",
@@ -441,34 +446,36 @@ def main():
         action="append",
         default=["do", "loopcontrols"],
     )
-    parser.add_option(
+    parser.add_argument(
         "-D",
+        dest="D",
         help="Define template variable in the form of key=value",
         action="append",
         metavar="key=value",
     )
-    parser.add_option(
+    parser.add_argument(
         "-s",
         "--section",
         help="Use only this section from the configuration",
         dest="section",
-        action="store",
     )
-    parser.add_option(
+    parser.add_argument(
         "--strict",
         help="Disallow undefined variables to be used within the template",
         dest="strict",
         action="store_true",
     )
-    parser.add_option(
+    parser.add_argument(
         "-o",
         "--outfile",
         help="File to use for output. Default is stdout.",
         dest="outfile",
         metavar="FILE",
-        action="store",
     )
-    opts, args = parser.parse_args()
+    parser.add_argument("template", nargs="?", help=argparse.SUPPRESS)
+    parser.add_argument("data", nargs="?", help=argparse.SUPPRESS)
+    opts = parser.parse_args()
+    args = [value for value in (opts.template, opts.data) if value is not None]
 
     # Dedupe list
     opts.extensions = set(opts.extensions)
