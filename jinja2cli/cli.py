@@ -240,6 +240,7 @@ def render(
         Environment,
         FileSystemLoader,
         StrictUndefined,
+        UndefinedError,
     )
 
     # Build search paths: template directory first, then any -I paths
@@ -279,7 +280,13 @@ def render(
         env.undefined = StrictUndefined
 
     # Add environ global
-    env.globals["environ"] = lambda key: os.environ.get(key)
+    def _environ(key: str):
+        value = os.environ.get(key)
+        if value is None and strict:
+            raise UndefinedError(f"environment variable '{key}' is not defined")
+        return value
+
+    env.globals["environ"] = _environ
     env.globals["get_context"] = lambda: data
 
     return env.get_template(os.path.basename(template_path)).render(data)

@@ -7,6 +7,7 @@ unicode_dir="${fixtures_dir}/unicode"
 extensions_dir="${fixtures_dir}/extensions"
 env_opts_dir="${fixtures_dir}/env_opts"
 include_paths_dir="${fixtures_dir}/include_paths"
+environ_dir="${fixtures_dir}/environ"
 
 require_module() {
     if ! uv run python "$helpers_dir/has_module.py" "$1"; then
@@ -156,4 +157,28 @@ require_toml() {
 
     [ "$status" -eq 0 ]
     [ "$output" = "<button>Click me</button>" ]
+}
+
+@test "environ returns None for missing var without --strict" {
+    unset JINJA2_CLI_TEST_VAR
+    run uv run jinja2 "$environ_dir/template.j2" "$environ_dir/empty.json" --format json
+
+    [ "$status" -eq 0 ]
+    [ "$output" = "None" ]
+}
+
+@test "environ fails for missing var with --strict" {
+    unset JINJA2_CLI_TEST_VAR
+    run uv run jinja2 "$environ_dir/template.j2" "$environ_dir/empty.json" --format json --strict
+
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"environment variable 'JINJA2_CLI_TEST_VAR' is not defined"* ]]
+}
+
+@test "environ works for existing var with --strict" {
+    export JINJA2_CLI_TEST_VAR=hello
+    run uv run jinja2 "$environ_dir/template.j2" "$environ_dir/empty.json" --format json --strict
+
+    [ "$status" -eq 0 ]
+    [ "$output" = "hello" ]
 }
