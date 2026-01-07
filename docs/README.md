@@ -7,3 +7,4 @@ Start here, then drill down as needed.
 - Extensions: [extensions.md](extensions.md)
 - Examples: [examples.md](examples.md)
 - CLI reference: [cli.md](cli.md)
+- Development: [development.md](development.md)
