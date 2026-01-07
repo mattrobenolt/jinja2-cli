@@ -412,32 +412,32 @@ def cli(opts: argparse.Namespace, args: Sequence[str]) -> int:
 
     data.update(parse_kv_string(opts.D or []))
 
+    rendered = render(
+        template_path,
+        data,
+        extensions,
+        opts.strict,
+        trim_blocks=opts.trim_blocks,
+        lstrip_blocks=opts.lstrip_blocks,
+        autoescape=opts.autoescape,
+        variable_start_string=opts.variable_start,
+        variable_end_string=opts.variable_end,
+        block_start_string=opts.block_start,
+        block_end_string=opts.block_end,
+        comment_start_string=opts.comment_start,
+        comment_end_string=opts.comment_end,
+        line_statement_prefix=opts.line_statement_prefix,
+        line_comment_prefix=opts.line_comment_prefix,
+        newline_sequence=opts.newline_sequence,
+        search_paths=opts.search_paths,
+    )
+
     if opts.outfile is None:
         out = sys.stdout
     else:
         out = open(opts.outfile, "w")
 
-    out.write(
-        render(
-            template_path,
-            data,
-            extensions,
-            opts.strict,
-            trim_blocks=opts.trim_blocks,
-            lstrip_blocks=opts.lstrip_blocks,
-            autoescape=opts.autoescape,
-            variable_start_string=opts.variable_start,
-            variable_end_string=opts.variable_end,
-            block_start_string=opts.block_start,
-            block_end_string=opts.block_end,
-            comment_start_string=opts.comment_start,
-            comment_end_string=opts.comment_end,
-            line_statement_prefix=opts.line_statement_prefix,
-            line_comment_prefix=opts.line_comment_prefix,
-            newline_sequence=opts.newline_sequence,
-            search_paths=opts.search_paths,
-        )
-    )
+    out.write(rendered)
     out.flush()
     return 0
 

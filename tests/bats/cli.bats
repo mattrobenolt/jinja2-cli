@@ -182,3 +182,26 @@ require_toml() {
     [ "$status" -eq 0 ]
     [ "$output" = "hello" ]
 }
+
+@test "output file preserved on render failure" {
+    tmp_out="$(mktemp)"
+    echo "original content" >"$tmp_out"
+
+    # Template with undefined var should fail with --strict
+    run uv run jinja2 "$environ_dir/template.j2" "$environ_dir/empty.json" --format json --strict -o "$tmp_out"
+
+    [ "$status" -eq 1 ]
+    [ "$(cat "$tmp_out")" = "original content" ]
+    rm -f "$tmp_out"
+}
+
+@test "same file for input and output works" {
+    tmp_file="$(mktemp)"
+    echo "hello {{ name }}" >"$tmp_file"
+
+    run uv run jinja2 -D name=world -o "$tmp_file" "$tmp_file"
+
+    [ "$status" -eq 0 ]
+    [ "$(cat "$tmp_file")" = "hello world" ]
+    rm -f "$tmp_file"
+}
