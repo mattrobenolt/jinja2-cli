@@ -36,6 +36,7 @@ options:
                         Line comment prefix
   --newline-sequence NEWLINE_SEQUENCE
                         Newline sequence (e.g., "\n" or "\r\n")
+  -S, --stream          Read template from stdin (no template file argument)
 ```
 
 ## Notes
@@ -44,6 +45,8 @@ options:
 - Use `--section` to select a top-level key from the input data.
 - Use `-I` to add directories to the template search path. This allows templates
   to include/import from those directories. Can be specified multiple times.
+- Use `-S/--stream` to read the template from stdin. In this mode, no template
+  file is expected; use `-D` to pass variables.
 
 ## Template globals
 

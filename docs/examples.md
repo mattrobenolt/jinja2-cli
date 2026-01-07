@@ -91,6 +91,19 @@ project/
 $ jinja2 templates/pages/home.j2 data.json -I templates/
 ```
 
+## Stream mode
+Use `-S` to read the template from stdin, useful for one-liners:
+```
+$ echo '{{ 1 + 1 }}' | jinja2 -S
+2
+
+$ echo 'Hello {{ name }}!' | jinja2 -S -D name=world
+Hello world!
+
+$ echo 'Home: {{ environ("HOME") }}' | jinja2 -S
+Home: /home/user
+```
+
 ## In the wild
 
 ### Dangerzone

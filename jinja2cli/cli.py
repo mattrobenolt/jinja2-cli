@@ -218,7 +218,7 @@ formats = {
 
 
 def render(
-    template_path: str,
+    template_path: str | None,
     data: dict,
     extensions: list[ExtensionSpec],
     strict: bool = False,
@@ -235,6 +235,7 @@ def render(
     line_comment_prefix: str | None = None,
     newline_sequence: str | None = None,
     search_paths: list[str] | None = None,
+    template_string: str | None = None,
 ) -> str:
     from jinja2 import (
         Environment,
@@ -243,17 +244,19 @@ def render(
         UndefinedError,
     )
 
-    # Build search paths: template directory first, then any -I paths
-    template_dir = os.path.dirname(template_path) or "."
-    paths = [template_dir] + (search_paths or [])
-
     env_kwargs: dict = {
-        "loader": FileSystemLoader(paths),
         "extensions": extensions,
         "keep_trailing_newline": True,
         "trim_blocks": trim_blocks,
         "lstrip_blocks": lstrip_blocks,
     }
+
+    # Only use FileSystemLoader when we have a template path (not streaming)
+    if template_path is not None:
+        template_dir = os.path.dirname(template_path) or "."
+        paths = [template_dir] + (search_paths or [])
+        env_kwargs["loader"] = FileSystemLoader(paths)
+
     if autoescape:
         env_kwargs["autoescape"] = True
     if variable_start_string is not None:
@@ -289,6 +292,9 @@ def render(
     env.globals["environ"] = _environ
     env.globals["get_context"] = lambda: data
 
+    if template_string is not None:
+        return env.from_string(template_string).render(data)
+    assert template_path is not None
     return env.get_template(os.path.basename(template_path)).render(data)
 
 
@@ -345,53 +351,61 @@ def resolve_extension(extension: ExtensionSpec, base_dir: str) -> ExtensionSpec:
 
 
 def cli(opts: argparse.Namespace, args: Sequence[str]) -> int:
-    template_path, data = args
-    format = opts.format
-    if data in ("-", ""):
-        if data == "-" or (data == "" and not sys.stdin.isatty()):
-            data = sys.stdin.read()
-        if format == "auto":
-            # default to yaml first if available since yaml
-            # is a superset of json
-            if has_format("yaml"):
-                format = "yaml"
-            else:
-                format = "json"
+    template_string: str | None = None
+    template_path: str | None = None
+
+    if opts.stream:
+        # Stream mode: read template from stdin, no data file
+        template_string = sys.stdin.read()
+        data: dict | str = {}
     else:
-        path = os.path.join(os.getcwd(), os.path.expanduser(data))
-        if format == "auto":
-            ext = os.path.splitext(path)[1][1:]
-            if has_format(ext):
-                format = ext
-            else:
-                raise InvalidDataFormat(ext)
+        template_path_arg, data = args
+        format = opts.format
+        if data in ("-", ""):
+            if data == "-" or (data == "" and not sys.stdin.isatty()):
+                data = sys.stdin.read()
+            if format == "auto":
+                # default to yaml first if available since yaml
+                # is a superset of json
+                if has_format("yaml"):
+                    format = "yaml"
+                else:
+                    format = "json"
+        else:
+            path = os.path.join(os.getcwd(), os.path.expanduser(data))
+            if format == "auto":
+                ext = os.path.splitext(path)[1][1:]
+                if has_format(ext):
+                    format = ext
+                else:
+                    raise InvalidDataFormat(ext)
 
-        with open(path) as fp:
-            data = fp.read()
+            with open(path) as fp:
+                data = fp.read()
 
-    template_path = os.path.abspath(template_path)
+        template_path = os.path.abspath(template_path_arg)
 
-    if data:
-        try:
-            fn, except_exc, raise_exc = get_format(format)
-        except InvalidDataFormat:
-            if format in ("yml", "yaml"):
-                raise InvalidDataFormat(f"{format}: install pyyaml to fix")
-            if format == "toml":
-                raise InvalidDataFormat("toml: install tomli to fix")
-            if format == "xml":
-                raise InvalidDataFormat("xml: install xmltodict to fix")
-            if format == "hjson":
-                raise InvalidDataFormat("hjson: install hjson to fix")
-            if format == "json5":
-                raise InvalidDataFormat("json5: install json5 to fix")
-            raise
-        try:
-            data = fn(data) or {}
-        except except_exc:
-            raise raise_exc(f"{data[:60]} ...")
-    else:
-        data = {}
+        if data:
+            try:
+                fn, except_exc, raise_exc = get_format(format)
+            except InvalidDataFormat:
+                if format in ("yml", "yaml"):
+                    raise InvalidDataFormat(f"{format}: install pyyaml to fix")
+                if format == "toml":
+                    raise InvalidDataFormat("toml: install tomli to fix")
+                if format == "xml":
+                    raise InvalidDataFormat("xml: install xmltodict to fix")
+                if format == "hjson":
+                    raise InvalidDataFormat("hjson: install hjson to fix")
+                if format == "json5":
+                    raise InvalidDataFormat("json5: install json5 to fix")
+                raise
+            try:
+                data = fn(data) or {}
+            except except_exc:
+                raise raise_exc(f"{data[:60]} ...")
+        else:
+            data = {}
 
     extensions = []
     for ext in opts.extensions:
@@ -430,6 +444,7 @@ def cli(opts: argparse.Namespace, args: Sequence[str]) -> int:
         line_comment_prefix=opts.line_comment_prefix,
         newline_sequence=opts.newline_sequence,
         search_paths=opts.search_paths,
+        template_string=template_string,
     )
 
     if opts.outfile is None:
@@ -602,6 +617,13 @@ def main() -> None:
         help=r'Newline sequence (e.g., "\n" or "\r\n")',
         dest="newline_sequence",
     )
+    parser.add_argument(
+        "-S",
+        "--stream",
+        help="Read template from stdin (no template file argument)",
+        action="store_true",
+        dest="stream",
+    )
     parser.add_argument("template", nargs="?", help=argparse.SUPPRESS)
     parser.add_argument("data", nargs="?", help=argparse.SUPPRESS)
     opts = parser.parse_args()
@@ -609,16 +631,20 @@ def main() -> None:
 
     opts.extensions = set(opts.extensions)
 
-    if len(args) == 0:
-        parser.print_help()
-        sys.exit(1)
+    if opts.stream:
+        # Stream mode: no positional args needed
+        args = []
+    else:
+        if len(args) == 0:
+            parser.print_help()
+            sys.exit(1)
 
-    # Without the second argv, assume they maybe want to read from stdin
-    if len(args) == 1:
-        args.append("")
+        # Without the second argv, assume they maybe want to read from stdin
+        if len(args) == 1:
+            args.append("")
 
-    if opts.format not in formats and opts.format != "auto":
-        raise InvalidDataFormat(opts.format)
+        if opts.format not in formats and opts.format != "auto":
+            raise InvalidDataFormat(opts.format)
 
     sys.exit(cli(opts, args))
 

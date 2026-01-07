@@ -205,3 +205,34 @@ require_toml() {
     [ "$(cat "$tmp_file")" = "hello world" ]
     rm -f "$tmp_file"
 }
+
+@test "stream mode renders template from stdin" {
+    run bash -c "echo '{{ 1 + 1 }}' | uv run jinja2 -S"
+
+    [ "$status" -eq 0 ]
+    [ "$output" = "2" ]
+}
+
+@test "stream mode with -D variables" {
+    run bash -c "echo 'Hello {{ name }}!' | uv run jinja2 -S -D name=world"
+
+    [ "$status" -eq 0 ]
+    [ "$output" = "Hello world!" ]
+}
+
+@test "stream mode with environ" {
+    run bash -c "export TEST_VAR=foobar && echo '{{ environ(\"TEST_VAR\") }}' | uv run jinja2 -S"
+
+    [ "$status" -eq 0 ]
+    [ "$output" = "foobar" ]
+}
+
+@test "stream mode with output file" {
+    tmp_out="$(mktemp)"
+
+    run bash -c "echo 'hello world' | uv run jinja2 -S -o '$tmp_out'"
+
+    [ "$status" -eq 0 ]
+    [ "$(cat "$tmp_out")" = "hello world" ]
+    rm -f "$tmp_out"
+}
