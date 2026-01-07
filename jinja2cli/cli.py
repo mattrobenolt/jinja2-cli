@@ -521,7 +521,7 @@ def cli(opts: argparse.Namespace, args: Sequence[str]) -> int:
             sys.stderr.write("ERROR: unknown section. Exiting.")
             return 1
 
-    data.update(parse_kv_string(opts.D or []))
+    deep_merge(data, parse_kv_string(opts.D or []))
 
     rendered = render(
         template_path,
@@ -555,6 +555,15 @@ def cli(opts: argparse.Namespace, args: Sequence[str]) -> int:
     return 0
 
 
+def deep_merge(target: dict, source: dict) -> dict:
+    for key, value in source.items():
+        if key in target and isinstance(target[key], dict) and isinstance(value, dict):
+            deep_merge(target[key], value)
+        else:
+            target[key] = value
+    return target
+
+
 def parse_kv_string(pairs: Iterable[str]) -> dict:
     dict_ = {}
     for pair in pairs:
@@ -562,7 +571,18 @@ def parse_kv_string(pairs: Iterable[str]) -> dict:
             k, v = pair.split("=", 1)
         except ValueError:
             k, v = pair, None
-        dict_[k] = v
+
+        # Support dot notation for nested dicts
+        if "." in k:
+            keys = k.split(".")
+            current = dict_
+            for key in keys[:-1]:
+                if key not in current:
+                    current[key] = {}
+                current = current[key]
+            current[keys[-1]] = v
+        else:
+            dict_[k] = v
     return dict_
 
 

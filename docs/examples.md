@@ -44,6 +44,24 @@ $ cat data.json | jinja2 template.j2 - --format json
 $ jinja2 template.j2 data.json --format json -D foo=bar -D answer=42
 ```
 
+### Nested variables with dot notation
+Use dot notation to set nested dictionary values:
+```sh
+$ jinja2 template.j2 data.json -D server.host=localhost -D server.port=8080
+```
+
+This is equivalent to:
+```json
+{
+  "server": {
+    "host": "localhost",
+    "port": "8080"
+  }
+}
+```
+
+Dot notation merges with existing data, so you can override specific nested values without replacing the entire structure.
+
 ## Environment variables
 Template:
 ```

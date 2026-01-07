@@ -9,6 +9,7 @@ env_opts_dir="${fixtures_dir}/env_opts"
 include_paths_dir="${fixtures_dir}/include_paths"
 environ_dir="${fixtures_dir}/environ"
 filters_dir="${fixtures_dir}/filters"
+dot_notation_dir="${fixtures_dir}/dot_notation"
 
 require_module() {
     if ! uv run python "$helpers_dir/has_module.py" "$1"; then
@@ -306,4 +307,13 @@ hello
     [ "$status" -eq 0 ]
     [[ "$output" == *"'a': 1"* ]]
     [[ "$output" == *"'b': 2"* ]]
+}
+
+@test "supports dot notation in -D parameters" {
+    run uv run jinja2 "$dot_notation_dir/template.j2" "$dot_notation_dir/data.json" --format json -D server.port=8080 -D auth.username=admin -D simple=value
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Server: localhost:8080"* ]]
+    [[ "$output" == *"Auth: admin:default"* ]]
+    [[ "$output" == *"Simple: value"* ]]
 }

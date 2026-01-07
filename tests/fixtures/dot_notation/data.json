@@ -1,0 +1,8 @@
+{
+  "server": {
+    "host": "localhost"
+  },
+  "auth": {
+    "password": "default"
+  }
+}
