@@ -39,6 +39,13 @@ Run `jinja2 --help` for all options, or see [docs/](docs/) for full documentatio
 - [ScyllaDB](https://github.com/scylladb/scylla-machine-image) CloudFormation templates
 - [800+ more](https://github.com/mattrobenolt/jinja2-cli/network/dependents) on GitHub
 
+## Available in
+[![PyPI](https://img.shields.io/pypi/v/jinja2-cli)](https://pypi.org/project/jinja2-cli/)
+[![Homebrew](https://img.shields.io/homebrew/v/jinja2-cli)](https://formulae.brew.sh/formula/jinja2-cli)
+[![nixpkgs](https://img.shields.io/badge/nixpkgs-jinja2--cli-blue)](https://search.nixos.org/packages?query=jinja2-cli)
+[![AUR](https://img.shields.io/aur/version/jinja2-cli)](https://aur.archlinux.org/packages/jinja2-cli)
+[![Alpine](https://img.shields.io/alpine/v/edge/community/jinja2-cli)](https://pkgs.alpinelinux.org/package/edge/community/x86_64/jinja2-cli)
+
 ## Learn more
 - [Jinja2 as a Command Line Application](https://thejeshgn.com/2021/12/07/jinja2-command-line-application/)
 - [Combining jinja2-cli with jq and environment variables](https://www.zufallsheld.de/2025/06/30/templating-jinja-cli)
