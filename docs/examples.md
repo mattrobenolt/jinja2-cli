@@ -5,14 +5,14 @@ A common pattern is to render config files at container startup from env vars
 and a template.
 
 `Dockerfile`:
-```
+```Dockerfile
 COPY nginx.conf.j2 /etc/nginx/nginx.conf.j2
 COPY docker-entrypoint.sh /usr/local/bin/
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 ```
 
 `docker-entrypoint.sh`:
-```
+```sh
 #!/usr/bin/env sh
 set -e
 
@@ -25,22 +25,22 @@ exec nginx -g "daemon off;"
 ```
 
 ## Render a file from JSON
-```
+```sh
 $ jinja2 template.j2 data.json --format json
 ```
 
 ## Render a file from YAML
-```
+```sh
 $ jinja2 template.j2 data.yaml --format yaml
 ```
 
 ## Render from stdin
-```
+```sh
 $ cat data.json | jinja2 template.j2 - --format json
 ```
 
 ## Inline variables
-```
+```sh
 $ jinja2 template.j2 data.json --format json -D foo=bar -D answer=42
 ```
 
@@ -53,7 +53,7 @@ USERNAME is {{ environ('USERNAME') }}
 ```
 
 Run:
-```
+```sh
 $ jinja2 template.j2 - --format env <<'EOF'
 PATH=$PATH
 USER=$USER
@@ -62,7 +62,7 @@ EOF
 ```
 
 ## Extensions
-```
+```sh
 $ jinja2 template.j2 data.json -e do -e loopcontrols
 $ jinja2 template.j2 data.json -e myext:MyExtension
 ```
