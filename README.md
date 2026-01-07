@@ -28,6 +28,7 @@ options:
   -e, --extension EXTENSIONS
                         extra jinja2 extensions to load
   -D key=value          Define template variable in the form of key=value
+  -I, --include DIR     Add directory to template search path
   -s, --section SECTION
                         Use only this section from the configuration
   --strict              Disallow undefined variables to be used within the template

@@ -6,6 +6,7 @@ formats_dir="${fixtures_dir}/formats"
 unicode_dir="${fixtures_dir}/unicode"
 extensions_dir="${fixtures_dir}/extensions"
 env_opts_dir="${fixtures_dir}/env_opts"
+include_paths_dir="${fixtures_dir}/include_paths"
 
 require_module() {
     if ! uv run python "$helpers_dir/has_module.py" "$1"; then
@@ -148,4 +149,11 @@ require_toml() {
 
     [ "$status" -eq 0 ]
     [ "$output" = "naïve 🧪 — résumé" ]
+}
+
+@test "include path allows importing from other directory" {
+    run uv run jinja2 "$include_paths_dir/pages/home.j2" "$include_paths_dir/data.json" --format json -I "$include_paths_dir"
+
+    [ "$status" -eq 0 ]
+    [ "$output" = "<button>Click me</button>" ]
 }

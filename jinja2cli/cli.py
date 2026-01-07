@@ -234,6 +234,7 @@ def render(
     line_statement_prefix: str | None = None,
     line_comment_prefix: str | None = None,
     newline_sequence: str | None = None,
+    search_paths: list[str] | None = None,
 ) -> str:
     from jinja2 import (
         Environment,
@@ -241,8 +242,12 @@ def render(
         StrictUndefined,
     )
 
+    # Build search paths: template directory first, then any -I paths
+    template_dir = os.path.dirname(template_path) or "."
+    paths = [template_dir] + (search_paths or [])
+
     env_kwargs: dict = {
-        "loader": FileSystemLoader(os.path.dirname(template_path)),
+        "loader": FileSystemLoader(paths),
         "extensions": extensions,
         "keep_trailing_newline": True,
         "trim_blocks": trim_blocks,
@@ -423,6 +428,7 @@ def cli(opts: argparse.Namespace, args: Sequence[str]) -> int:
             line_statement_prefix=opts.line_statement_prefix,
             line_comment_prefix=opts.line_comment_prefix,
             newline_sequence=opts.newline_sequence,
+            search_paths=opts.search_paths,
         )
     )
     out.flush()
@@ -497,6 +503,15 @@ def main() -> None:
         help="Define template variable in the form of key=value",
         action="append",
         metavar="key=value",
+    )
+    parser.add_argument(
+        "-I",
+        "--include",
+        help="Add directory to template search path",
+        dest="search_paths",
+        action="append",
+        default=[],
+        metavar="DIR",
     )
     parser.add_argument(
         "-s",

@@ -67,6 +67,30 @@ $ jinja2 template.j2 data.json -e do -e loopcontrols
 $ jinja2 template.j2 data.json -e myext:MyExtension
 ```
 
+## Include paths
+Use `-I` to add directories to the template search path. This is useful when
+templates need to include or import from a shared directory:
+
+```
+project/
+├── templates/
+│   ├── macros/
+│   │   └── buttons.j2
+│   └── pages/
+│       └── home.j2
+└── data.json
+```
+
+`home.j2`:
+```jinja
+{% from "macros/buttons.j2" import button %}
+{{ button("Click me") }}
+```
+
+```
+$ jinja2 templates/pages/home.j2 data.json -I templates/
+```
+
 ## In the wild
 If you have public examples (blog posts, repos, or Docker images) that use
 `jinja2-cli`, add a link here.
