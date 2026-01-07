@@ -67,6 +67,22 @@ $ jinja2 template.j2 data.json -e do -e loopcontrols
 $ jinja2 template.j2 data.json -e myext:MyExtension
 ```
 
+See [extensions.md](extensions.md) for details.
+
+## Custom Filters
+```sh
+# Import a custom filter module
+$ jinja2 template.j2 data.json -F myfilters
+
+# Import specific filter function
+$ jinja2 template.j2 data.json -F myfilters.reverse
+
+# Use Ansible filters
+$ jinja2 template.j2 data.json -F ansible.plugins.filter.core
+```
+
+See [filters.md](filters.md) for detailed examples and patterns.
+
 ## Include paths
 Use `-I` to add directories to the template search path. This is useful when
 templates need to include or import from a shared directory:

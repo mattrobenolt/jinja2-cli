@@ -33,10 +33,10 @@ toml = ["tomli; python_version < '3.11'"]
 xml = ["xmltodict"]
 hjson = ["hjson"]
 json5 = ["json5"]
-tests = ["pytest", "ruff"]
 
 [dependency-groups]
 dev = [
+    "ansible-core",
     "pytest",
     "ruff",
     "ty",

@@ -217,10 +217,99 @@ formats = {
 }
 
 
+def discover_filters(filter_path: str, base_dir: str | None = None) -> dict[str, Callable]:
+    import inspect
+
+    discovered_filters: dict[str, Callable] = {}
+    module = None
+    object_name = None
+
+    # Try importing the full path as a module first
+    try:
+        if importlib.util.find_spec(filter_path) is not None:
+            module = importlib.import_module(filter_path)
+    except (ModuleNotFoundError, ValueError):
+        pass
+
+    if module is None:
+        # Not a module, try splitting into module.object
+        module_name, object_name = split_extension_path(filter_path)
+        try:
+            if importlib.util.find_spec(module_name) is not None:
+                module = importlib.import_module(module_name)
+        except (ModuleNotFoundError, ValueError):
+            pass
+
+        if module is None and base_dir:
+            module = load_local_module(module_name, base_dir)
+
+    if module is None:
+        raise ModuleNotFoundError(f"Cannot import filter module from {filter_path!r}")
+
+    if object_name:
+        # Import specific object from module
+        try:
+            filter_fn = getattr(module, object_name)
+        except AttributeError as exc:
+            raise ModuleNotFoundError(f"Cannot import {object_name!r} from module") from exc
+
+        # Check if it's a class with a filters() method (e.g., Ansible FilterModule)
+        if inspect.isclass(filter_fn):
+            if hasattr(filter_fn, "filters"):
+                instance = filter_fn()
+                if callable(instance.filters):
+                    result = instance.filters()
+                    if isinstance(result, dict):
+                        discovered_filters.update(result)
+            return discovered_filters
+
+        # If it's a callable, use it as a filter with its function name
+        if callable(filter_fn):
+            # If it returns a dict, merge all filters, otherwise use function name
+            if object_name in ("filters", "get_filters", "load_filters") or object_name.startswith(
+                "load_"
+            ):
+                # Convention: these return dict of filters
+                result = filter_fn()
+                if isinstance(result, dict):
+                    discovered_filters.update(result)
+                else:
+                    discovered_filters[filter_fn.__name__] = filter_fn
+            else:
+                discovered_filters[filter_fn.__name__] = filter_fn
+        elif isinstance(filter_fn, dict):
+            # If it's already a dict, merge it
+            discovered_filters.update(filter_fn)
+    else:
+        # No specific object, look for common patterns
+        # Check for FilterModule class (Ansible pattern)
+        if hasattr(module, "FilterModule") and inspect.isclass(module.FilterModule):
+            if hasattr(module.FilterModule, "filters"):
+                instance = module.FilterModule()
+                if callable(instance.filters):
+                    result = instance.filters()
+                    if isinstance(result, dict):
+                        discovered_filters.update(result)
+        elif hasattr(module, "filters") and isinstance(module.filters, dict):
+            discovered_filters.update(module.filters)
+        elif hasattr(module, "filters") and callable(module.filters):
+            result = module.filters()
+            if isinstance(result, dict):
+                discovered_filters.update(result)
+        else:
+            # Auto-discover all public callables in the module
+            for name, obj in inspect.getmembers(module):
+                if not name.startswith("_") and callable(obj) and inspect.isfunction(obj):
+                    discovered_filters[name] = obj
+
+    return discovered_filters
+
+
 def render(
     template_path: str | None,
     data: dict,
     extensions: list[ExtensionSpec],
+    filters: list[str] | None = None,
     strict: bool = False,
     trim_blocks: bool = False,
     lstrip_blocks: bool = False,
@@ -236,6 +325,7 @@ def render(
     newline_sequence: str | None = None,
     search_paths: list[str] | None = None,
     template_string: str | None = None,
+    base_dir: str | None = None,
 ) -> str:
     from jinja2 import (
         Environment,
@@ -281,6 +371,13 @@ def render(
     env = Environment(**env_kwargs)
     if strict:
         env.undefined = StrictUndefined
+
+    # Load custom filters
+    if filters:
+        filter_base_dir = base_dir or os.getcwd()
+        for filter_path in filters:
+            discovered = discover_filters(filter_path, filter_base_dir)
+            env.filters.update(discovered)
 
     # Add environ global
     def _environ(key: str):
@@ -430,7 +527,8 @@ def cli(opts: argparse.Namespace, args: Sequence[str]) -> int:
         template_path,
         data,
         extensions,
-        opts.strict,
+        filters=opts.filters,
+        strict=opts.strict,
         trim_blocks=opts.trim_blocks,
         lstrip_blocks=opts.lstrip_blocks,
         autoescape=opts.autoescape,
@@ -518,6 +616,14 @@ def main() -> None:
         dest="extensions",
         action="append",
         default=["do", "loopcontrols"],
+    )
+    parser.add_argument(
+        "-F",
+        "--filter",
+        help="extra jinja2 filters to load (e.g., mymodule.myfilter)",
+        dest="filters",
+        action="append",
+        default=[],
     )
     parser.add_argument(
         "-D",

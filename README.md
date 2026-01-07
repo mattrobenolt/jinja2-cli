@@ -29,9 +29,34 @@ $ pip install jinja2-cli[json5]
 - Read data from files or stdin
 - Define variables inline with `-D key=value`
 - Custom Jinja2 extensions
+- **Import custom filters** - see [Custom Filters](#custom-filters) below
 - Full control over Jinja2 environment options
 
 Run `jinja2 --help` for all options, or see [docs/](docs/) for full documentation.
+
+## Custom Filters
+
+Extend Jinja2 with your own filters or use Ansible's extensive filter library:
+
+```bash
+# Use custom filters
+$ jinja2 template.j2 data.json -F myfilters
+
+# Use Ansible filters
+$ jinja2 template.j2 data.json -F ansible.plugins.filter.core
+```
+
+Example filter module:
+```python
+# myfilters.py
+def reverse(s):
+    return s[::-1]
+
+def shout(s):
+    return s.upper() + "!"
+```
+
+See [docs/filters.md](docs/filters.md) for complete documentation and examples.
 
 ## Used by
 - [Dangerzone](https://github.com/freedomofpress/dangerzone) by Freedom of the Press Foundation

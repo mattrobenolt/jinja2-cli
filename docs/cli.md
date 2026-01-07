@@ -9,6 +9,7 @@ options:
   -f, --format FORMAT   format of input variables: auto, env, hjson, ini, json, json5, querystring, toml, xml, yaml, yml
   -e, --extension EXTENSIONS
                         extra jinja2 extensions to load
+  -F, --filter FILTERS  extra jinja2 filters to load (e.g., mymodule.myfilter)
   -D key=value          Define template variable in the form of key=value
   -I, --include DIR     Add directory to template search path
   -s, --section SECTION

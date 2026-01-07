@@ -8,6 +8,7 @@ extensions_dir="${fixtures_dir}/extensions"
 env_opts_dir="${fixtures_dir}/env_opts"
 include_paths_dir="${fixtures_dir}/include_paths"
 environ_dir="${fixtures_dir}/environ"
+filters_dir="${fixtures_dir}/filters"
 
 require_module() {
     if ! uv run python "$helpers_dir/has_module.py" "$1"; then
@@ -235,4 +236,74 @@ require_toml() {
     [ "$status" -eq 0 ]
     [ "$(cat "$tmp_out")" = "hello world" ]
     rm -f "$tmp_out"
+}
+
+@test "loads single custom filter function" {
+    run bash -c "cd '$filters_dir' && uv run jinja2 template_single.j2 data.json --format json --filter custom.reverse"
+
+    [ "$status" -eq 0 ]
+    [ "$output" = "olleh" ]
+}
+
+@test "loads multiple custom filter functions" {
+    run bash -c "cd '$filters_dir' && uv run jinja2 template.j2 data.json --format json --filter custom.reverse --filter custom.multiply --filter custom.shout"
+
+    [ "$status" -eq 0 ]
+    [ "$output" = "olleh
+15
+HI!" ]
+}
+
+@test "loads filters from module dict" {
+    run bash -c "cd '$filters_dir' && uv run jinja2 template.j2 data.json --format json --filter custom.filters"
+
+    [ "$status" -eq 0 ]
+    [ "$output" = "olleh
+15
+HI!" ]
+}
+
+@test "loads filters from module with filters attribute" {
+    run bash -c "cd '$filters_dir' && uv run jinja2 template.j2 data.json --format json --filter custom"
+
+    [ "$status" -eq 0 ]
+    [ "$output" = "olleh
+15
+HI!" ]
+}
+
+@test "auto-discovers filters from module" {
+    run bash -c "cd '$filters_dir' && uv run jinja2 template_autodiscover.j2 data_autodiscover.json --format json --filter autodiscover"
+
+    [ "$status" -eq 0 ]
+    [ "$output" = "HELLO
+hello
+10" ]
+}
+
+@test "loads ansible filters via helper function" {
+    require_module ansible
+    run bash -c "cd '$filters_dir' && uv run jinja2 template_ansible.j2 data_ansible.json --format json --filter ansible_helper.load_core_filters"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"'a': 1"* ]]
+    [[ "$output" == *"'b': 2"* ]]
+}
+
+@test "loads ansible filters directly from FilterModule class" {
+    require_module ansible
+    run bash -c "cd '$filters_dir' && uv run jinja2 template_ansible.j2 data_ansible.json --format json --filter ansible.plugins.filter.core.FilterModule"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"'a': 1"* ]]
+    [[ "$output" == *"'b': 2"* ]]
+}
+
+@test "loads ansible filters using simplified module syntax" {
+    require_module ansible
+    run bash -c "cd '$filters_dir' && uv run jinja2 template_ansible.j2 data_ansible.json --format json -F ansible.plugins.filter.core"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"'a': 1"* ]]
+    [[ "$output" == *"'b': 2"* ]]
 }
