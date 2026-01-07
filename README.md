@@ -32,3 +32,13 @@ $ pip install jinja2-cli[json5]
 - Full control over Jinja2 environment options
 
 Run `jinja2 --help` for all options, or see [docs/](docs/) for full documentation.
+
+## Used by
+- [Dangerzone](https://github.com/freedomofpress/dangerzone) by Freedom of the Press Foundation
+- [Elastic](https://github.com/elastic/logstash-docker) Docker images (Logstash, Kibana, Beats)
+- [ScyllaDB](https://github.com/scylladb/scylla-machine-image) CloudFormation templates
+- [800+ more](https://github.com/mattrobenolt/jinja2-cli/network/dependents) on GitHub
+
+## Learn more
+- [Jinja2 as a Command Line Application](https://thejeshgn.com/2021/12/07/jinja2-command-line-application/)
+- [Combining jinja2-cli with jq and environment variables](https://www.zufallsheld.de/2025/06/30/templating-jinja-cli)
