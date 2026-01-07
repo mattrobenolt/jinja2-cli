@@ -44,7 +44,7 @@ Run `jinja2 --help` for all options, or see [docs/](docs/) for full documentatio
 [![Homebrew](https://img.shields.io/homebrew/v/jinja2-cli)](https://formulae.brew.sh/formula/jinja2-cli)
 [![nixpkgs](https://img.shields.io/badge/nixpkgs-jinja2--cli-blue)](https://search.nixos.org/packages?query=jinja2-cli)
 [![AUR](https://img.shields.io/aur/version/jinja2-cli)](https://aur.archlinux.org/packages/jinja2-cli)
-[![Alpine](https://img.shields.io/alpine/v/edge/community/jinja2-cli)](https://pkgs.alpinelinux.org/package/edge/community/x86_64/jinja2-cli)
+[![Alpine](https://img.shields.io/badge/Alpine-jinja2--cli-0D597F?logo=alpinelinux&logoColor=fff)](https://pkgs.alpinelinux.org/package/edge/community/x86_64/jinja2-cli)
 
 ## Learn more
 - [Jinja2 as a Command Line Application](https://thejeshgn.com/2021/12/07/jinja2-command-line-application/)
