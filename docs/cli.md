@@ -44,3 +44,25 @@ options:
 - Use `--section` to select a top-level key from the input data.
 - Use `-I` to add directories to the template search path. This allows templates
   to include/import from those directories. Can be specified multiple times.
+
+## Template globals
+
+### `environ(key)`
+Access environment variables:
+```jinja
+{{ environ("HOME") }}
+{{ environ("USER") }}
+```
+
+Returns `None` if the variable is not set. With `--strict`, raises an error
+for missing variables.
+
+### `get_context()`
+Access the root data context. Useful for iterating over all input data:
+```jinja
+{{ get_context() | length }} entries
+
+{% for key, value in get_context().items() %}
+{{ key }}: {{ value }}
+{% endfor %}
+```
