@@ -36,6 +36,7 @@
             uv
             shellcheck
             uvShellHook
+            hadolint
           ];
         };
       }

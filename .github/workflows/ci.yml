@@ -2,7 +2,8 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
 
 jobs:
@@ -23,11 +24,14 @@ jobs:
           cache-python: true
       - name: Install bats
         uses: bats-core/bats-action@3.0.1
+        id: setup-bats
       - name: Install dependencies
         run: just sync
       - name: Run tests
         run: just test
       - name: Run bats
         run: just bats
+        env:
+          BATS_LIB_PATH: ${{ steps.setup-bats.outputs.lib-path }}
       - name: Lint
         run: just lint
