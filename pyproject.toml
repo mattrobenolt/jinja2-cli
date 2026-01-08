@@ -1,6 +1,6 @@
 [project]
 name = "jinja2-cli"
-version = "1.0.0b1"
+version = "1.0.0"
 description = "The CLI interface to Jinja2"
 readme = "README.md"
 requires-python = ">=3.8"
