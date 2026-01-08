@@ -1,7 +1,7 @@
 [project]
 name = "jinja2-cli"
 version = "1.0.0b1"
-description = "A CLI interface to Jinja2"
+description = "The CLI interface to Jinja2"
 readme = "README.md"
 requires-python = ">=3.8"
 license = { file = "LICENSE" }
@@ -10,7 +10,6 @@ dependencies = ["jinja2>=3.1"]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.7",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
