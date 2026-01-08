@@ -464,15 +464,41 @@ def cli(opts: argparse.Namespace, args: Sequence[str]) -> int:
     template_path: str | None = None
 
     if opts.stream:
-        # Stream mode: read template from stdin, no data file
+        # Stream mode: read template from stdin, all args are data files
         template_string = sys.stdin.read()
-        data: dict | str = {}
+        data_files = args
     else:
-        template_path_arg, data = args
+        # Normal mode: first arg is template, rest are data files
+        template_path_arg = args[0]
+        data_files = args[1:]
+        template_path = os.path.abspath(template_path_arg)
+
+    data: dict = {}
+
+    # Determine if we're reading from stdin or files
+    if not data_files:
+        # No data files specified
+        if opts.stream:
+            # In stream mode, stdin is used for template, so no data
+            data_files = []
+        else:
+            # Normal mode, read data from stdin
+            data_files = ["-"]
+
+    # Check for invalid mixing of stdin and files
+    has_stdin = any(f in ("-", "") for f in data_files)
+    if has_stdin and len(data_files) > 1:
+        sys.stderr.write("ERROR: Cannot mix stdin (-) with file arguments\n")
+        return 1
+
+    # Load and merge multiple data files
+    for data_file in data_files:
         format = opts.format
-        if data in ("-", ""):
-            if data == "-" or (data == "" and not sys.stdin.isatty()):
-                data = sys.stdin.read()
+        data_content = ""
+
+        if data_file in ("-", ""):
+            if data_file == "-" or (data_file == "" and not sys.stdin.isatty()):
+                data_content = sys.stdin.read()
             if format == "auto":
                 # default to yaml first if available since yaml
                 # is a superset of json
@@ -481,7 +507,7 @@ def cli(opts: argparse.Namespace, args: Sequence[str]) -> int:
                 else:
                     format = "json"
         else:
-            path = os.path.join(os.getcwd(), os.path.expanduser(data))
+            path = os.path.join(os.getcwd(), os.path.expanduser(data_file))
             if format == "auto":
                 ext = os.path.splitext(path)[1][1:]
                 if has_format(ext):
@@ -490,11 +516,9 @@ def cli(opts: argparse.Namespace, args: Sequence[str]) -> int:
                     raise InvalidDataFormat(ext)
 
             with open(path) as fp:
-                data = fp.read()
+                data_content = fp.read()
 
-        template_path = os.path.abspath(template_path_arg)
-
-        if data:
+        if data_content:
             try:
                 fn, except_exc, raise_exc = get_format(format)
             except InvalidDataFormat:
@@ -510,11 +534,10 @@ def cli(opts: argparse.Namespace, args: Sequence[str]) -> int:
                     raise InvalidDataFormat("json5: install json5 to fix")
                 raise
             try:
-                data = fn(data) or {}
+                parsed = fn(data_content) or {}
+                deep_merge(data, parsed)
             except except_exc:
-                raise raise_exc(f"{data[:60]} ...")
-        else:
-            data = {}
+                raise raise_exc(f"{data_content[:60]} ...")
 
     extensions = []
     for ext in opts.extensions:
@@ -763,16 +786,13 @@ def main() -> None:
         dest="stream",
     )
     parser.add_argument("template", nargs="?", help=argparse.SUPPRESS)
-    parser.add_argument("data", nargs="?", help=argparse.SUPPRESS)
+    parser.add_argument("data", nargs="*", help=argparse.SUPPRESS)
     opts = parser.parse_args()
-    args = [value for value in (opts.template, opts.data) if value is not None]
+    args = [opts.template] + list(opts.data) if opts.template else []
 
     opts.extensions = set(opts.extensions)
 
-    if opts.stream:
-        # Stream mode: no positional args needed
-        args = []
-    else:
+    if not opts.stream:
         if len(args) == 0:
             parser.print_help()
             sys.exit(1)

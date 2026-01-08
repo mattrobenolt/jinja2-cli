@@ -39,6 +39,48 @@ $ jinja2 template.j2 data.yaml --format yaml
 $ cat data.json | jinja2 template.j2 - --format json
 ```
 
+## Multiple data files
+Merge multiple data files together. Later files override values from earlier files using deep merge:
+
+```sh
+$ jinja2 template.j2 base.json overrides.yaml production.json
+```
+
+Example with nested structure:
+
+`base.json`:
+```json
+{
+  "app": "myapp",
+  "server": {
+    "host": "localhost",
+    "port": 3000
+  },
+  "debug": false
+}
+```
+
+`production.yaml`:
+```yaml
+server:
+  port: 8080
+debug: false
+```
+
+Result after merge:
+```json
+{
+  "app": "myapp",
+  "server": {
+    "host": "localhost",
+    "port": 8080
+  },
+  "debug": false
+}
+```
+
+Note that `server.host` is preserved from `base.json` while `server.port` is overridden by `production.yaml`.
+
 ## Inline variables
 ```sh
 $ jinja2 template.j2 data.json --format json -D foo=bar -D answer=42
@@ -136,6 +178,15 @@ Hello world!
 
 $ echo 'Home: {{ environ("HOME") }}' | jinja2 -S
 Home: /home/user
+```
+
+Stream mode also supports data files:
+```
+$ echo 'Hello {{ name }}!' | jinja2 -S data.json
+Hello World!
+
+$ echo '{{ greeting }} {{ name }}!' | jinja2 -S base.json overrides.yaml
+Hello World!
 ```
 
 ## In the wild

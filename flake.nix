@@ -28,7 +28,11 @@
           packages = with pkgs; [
             just
             hyperfine
-            bats
+            (bats.withLibraries (p: [
+              p.bats-support
+              p.bats-assert
+              p.bats-file
+            ]))
             uv
             shellcheck
             uvShellHook

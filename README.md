@@ -4,7 +4,6 @@ The CLI for [Jinja2](https://jinja.palletsprojects.com/).
 
 ```
 $ jinja2 template.j2 data.json
-$ cat data.json | jinja2 template.j2
 $ curl -s http://api.example.com | jinja2 template.j2
 ```
 
