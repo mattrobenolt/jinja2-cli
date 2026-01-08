@@ -1,6 +1,6 @@
 # $ jinja2
 
-A CLI for [Jinja2](https://jinja.palletsprojects.com/).
+The CLI for [Jinja2](https://jinja.palletsprojects.com/).
 
 ```
 $ jinja2 template.j2 data.json
