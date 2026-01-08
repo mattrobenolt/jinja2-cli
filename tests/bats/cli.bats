@@ -317,3 +317,27 @@ hello
     [[ "$output" == *"Auth: admin:default"* ]]
     [[ "$output" == *"Simple: value"* ]]
 }
+
+@test "env format supports multiline values" {
+    cat >/tmp/test_multiline.env <<'EOF'
+FOO="first line\nsecond line"
+BAR=simple
+BAZ="with\ttab"
+EOF
+
+    cat >/tmp/test_multiline.j2 <<'EOF'
+FOO: {{ FOO }}
+BAR: {{ BAR }}
+BAZ: {{ BAZ }}
+EOF
+
+    run uv run jinja2 /tmp/test_multiline.j2 /tmp/test_multiline.env --format env
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"FOO: first line"* ]]
+    [[ "$output" == *"second line"* ]]
+    [[ "$output" == *"BAR: simple"* ]]
+    [[ "$output" == *"with	tab"* ]]
+
+    rm -f /tmp/test_multiline.env /tmp/test_multiline.j2
+}

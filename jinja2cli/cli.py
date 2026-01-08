@@ -174,7 +174,8 @@ def load_xml() -> FormatLoadResult:
 def load_env() -> FormatLoadResult:
     def parse_env(data: str) -> dict:
         """
-        Parse an envfile format of key=value pairs that are newline separated
+        Parse an envfile format of key=value pairs that are newline separated.
+        Supports quoted values with escape sequences.
         """
         dict_ = {}
         for line in data.splitlines():
@@ -183,6 +184,17 @@ def load_env() -> FormatLoadResult:
             if not line or line[:1] == "#":
                 continue
             k, v = line.split("=", 1)
+
+            # Handle quoted values
+            if v and v[0] in ('"', "'"):
+                quote = v[0]
+                if len(v) > 1 and v[-1] == quote:
+                    # Remove surrounding quotes
+                    v = v[1:-1]
+                    # Decode escape sequences for double-quoted values
+                    if quote == '"':
+                        v = v.encode().decode("unicode-escape")
+
             dict_[k] = v
         return dict_
 

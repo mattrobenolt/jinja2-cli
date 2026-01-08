@@ -41,6 +41,36 @@ def test_env_format():
     assert parser("FOO=bar\nBAR=baz\n") == {"FOO": "bar", "BAR": "baz"}
 
 
+def test_env_format_with_double_quotes():
+    parser = _get_parser("env")
+    assert parser('FOO="bar"\n') == {"FOO": "bar"}
+
+
+def test_env_format_with_single_quotes():
+    parser = _get_parser("env")
+    assert parser("FOO='bar'\n") == {"FOO": "bar"}
+
+
+def test_env_format_with_multiline():
+    parser = _get_parser("env")
+    assert parser('FOO="first line\\nsecond line"\n') == {"FOO": "first line\nsecond line"}
+
+
+def test_env_format_with_escaped_quotes():
+    parser = _get_parser("env")
+    assert parser('FOO="hello \\"world\\""\n') == {"FOO": 'hello "world"'}
+
+
+def test_env_format_with_tabs():
+    parser = _get_parser("env")
+    assert parser('FOO="hello\\tworld"\n') == {"FOO": "hello\tworld"}
+
+
+def test_env_format_with_backslash():
+    parser = _get_parser("env")
+    assert parser('FOO="path\\\\to\\\\file"\n') == {"FOO": "path\\to\\file"}
+
+
 def test_hjson_format():
     parser = _get_parser("hjson")
     assert parser("foo: bar\n") == {"foo": "bar"}
