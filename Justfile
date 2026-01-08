@@ -8,7 +8,7 @@ test:
     uv run pytest -v
 
 bats:
-    bats tests/bats
+    bats -T tests/bats
 
 test-all: test bats
 

@@ -14,10 +14,14 @@ import os
 import sys
 from collections.abc import Iterable, Iterator, Sequence
 from types import ModuleType
-from typing import Any, Callable, Tuple, Type, Union
+from typing import IO, Any, Callable, Tuple, Type, Union
 
 
 class InvalidDataFormat(Exception):
+    pass
+
+
+class InvalidUsage(Exception):
     pass
 
 
@@ -171,33 +175,34 @@ def load_xml() -> FormatLoadResult:
     return xmltodict.parse, expat.ExpatError, MalformedXML
 
 
+def parse_env(data: str) -> dict:
+    """
+    Parse an envfile format of key=value pairs that are newline separated.
+    Supports quoted values with escape sequences.
+    """
+    dict_ = {}
+    for line in data.splitlines():
+        line = line.lstrip()
+        # ignore empty or commented lines
+        if not line or line[:1] == "#":
+            continue
+        k, v = line.split("=", 1)
+
+        # Handle quoted values
+        if v and v[0] in ('"', "'"):
+            quote = v[0]
+            if len(v) > 1 and v[-1] == quote:
+                # Remove surrounding quotes
+                v = v[1:-1]
+                # Decode escape sequences for double-quoted values
+                if quote == '"':
+                    v = v.encode().decode("unicode-escape")
+
+        dict_[k] = v
+    return dict_
+
+
 def load_env() -> FormatLoadResult:
-    def parse_env(data: str) -> dict:
-        """
-        Parse an envfile format of key=value pairs that are newline separated.
-        Supports quoted values with escape sequences.
-        """
-        dict_ = {}
-        for line in data.splitlines():
-            line = line.lstrip()
-            # ignore empty or commented lines
-            if not line or line[:1] == "#":
-                continue
-            k, v = line.split("=", 1)
-
-            # Handle quoted values
-            if v and v[0] in ('"', "'"):
-                quote = v[0]
-                if len(v) > 1 and v[-1] == quote:
-                    # Remove surrounding quotes
-                    v = v[1:-1]
-                    # Decode escape sequences for double-quoted values
-                    if quote == '"':
-                        v = v.encode().decode("unicode-escape")
-
-            dict_[k] = v
-        return dict_
-
     return parse_env, Exception, MalformedEnv
 
 
@@ -488,8 +493,7 @@ def cli(opts: argparse.Namespace, args: Sequence[str]) -> int:
     # Check for invalid mixing of stdin and files
     has_stdin = any(f in ("-", "") for f in data_files)
     if has_stdin and len(data_files) > 1:
-        sys.stderr.write("ERROR: Cannot mix stdin (-) with file arguments\n")
-        return 1
+        raise InvalidUsage("cannot mix stdin (-) with file arguments")
 
     # Load and merge multiple data files
     for data_file in data_files:
@@ -553,8 +557,7 @@ def cli(opts: argparse.Namespace, args: Sequence[str]) -> int:
         if section in data:
             data = data[section]
         else:
-            sys.stderr.write("ERROR: unknown section. Exiting.")
-            return 1
+            raise InvalidUsage(f"unknown section: {section}")
 
     deep_merge(data, parse_kv_string(opts.D or []))
 
@@ -649,7 +652,7 @@ class VersionAction(argparse.Action):
         parser.exit(message=f"jinja2-cli v{__version__}\n - Jinja2 v{jinja_version}\n")
 
 
-def main() -> None:
+def run() -> int:
     parser = ArgumentParser(usage="%(prog)s [options] <input template> <input data>")
     parser.add_argument(
         "--version",
@@ -795,7 +798,7 @@ def main() -> None:
     if not opts.stream:
         if len(args) == 0:
             parser.print_help()
-            sys.exit(1)
+            return 1
 
         # Without the second argv, assume they maybe want to read from stdin
         if len(args) == 1:
@@ -804,7 +807,63 @@ def main() -> None:
         if opts.format not in formats and opts.format != "auto":
             raise InvalidDataFormat(opts.format)
 
-    sys.exit(cli(opts, args))
+    return cli(opts, args)
+
+
+# borrowed from https://github.com/python/cpython/blob/3.14/Lib/_colorize.py#L274
+def can_colorize(*, file: IO[str] | IO[bytes] | None = None) -> bool:
+    def _safe_getenv(k: str, fallback: str | None = None) -> str | None:
+        """Exception-safe environment retrieval. See gh-128636."""
+        try:
+            return os.environ.get(k, fallback)
+        except Exception:
+            return fallback
+
+    if file is None:
+        file = sys.stdout
+
+    if not sys.flags.ignore_environment:
+        if _safe_getenv("PYTHON_COLORS") == "0":
+            return False
+        if _safe_getenv("PYTHON_COLORS") == "1":
+            return True
+    if _safe_getenv("NO_COLOR"):
+        return False
+    if _safe_getenv("FORCE_COLOR"):
+        return True
+    if _safe_getenv("TERM") == "dumb":
+        return False
+
+    if not hasattr(file, "fileno"):
+        return False
+
+    if sys.platform == "win32":
+        try:
+            import nt
+
+            if not nt._supports_virtual_terminal():
+                return False
+        except (ImportError, AttributeError):
+            return False
+
+    try:
+        return os.isatty(file.fileno())
+    except OSError:
+        return hasattr(file, "isatty") and file.isatty()
+
+
+def main() -> None:
+    try:
+        raise SystemExit(run())
+    except KeyboardInterrupt:
+        raise SystemExit(130)
+    except Exception as e:
+        file = sys.stderr
+        if can_colorize(file=file):
+            print(f"\x1b[1;35m{type(e).__name__}\x1b[0m: \x1b[35m{e}\x1b[0m", file=file)
+        else:
+            print(f"{type(e).__name__}: {e}", file=file)
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
