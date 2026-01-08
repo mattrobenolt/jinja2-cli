@@ -71,6 +71,6 @@ bump kind:
     git diff --quiet --exit-code
     uv version --bump {{ kind }}
     git commit -am "bump $(uv version --short)"
-    git tag -a "v$(uv version --short)" -a "v$(uv version --short)"
+    git tag -a "v$(uv version --short)" -m "v$(uv version --short)"
     git push
     git push origin "v$(uv version --short)"
