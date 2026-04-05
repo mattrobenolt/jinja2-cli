@@ -852,6 +852,20 @@ def can_colorize(*, file: IO[str] | IO[bytes] | None = None) -> bool:
         return hasattr(file, "isatty") and file.isatty()
 
 
+def format_exception_message(exc: Exception) -> str:
+    details = str(exc)
+    filename = getattr(exc, "filename", None) or getattr(exc, "name", None)
+    lineno = getattr(exc, "lineno", None)
+
+    if filename and lineno is not None:
+        return f"{details} ({filename}:{lineno})"
+    if filename:
+        return f"{details} ({filename})"
+    if lineno is not None:
+        return f"{details} (line {lineno})"
+    return details
+
+
 def main() -> None:
     try:
         raise SystemExit(run())
@@ -859,10 +873,11 @@ def main() -> None:
         raise SystemExit(130)
     except Exception as e:
         file = sys.stderr
+        message = format_exception_message(e)
         if can_colorize(file=file):
-            print(f"\x1b[1;35m{type(e).__name__}\x1b[0m: \x1b[35m{e}\x1b[0m", file=file)
+            print(f"\x1b[1;35m{type(e).__name__}\x1b[0m: \x1b[35m{message}\x1b[0m", file=file)
         else:
-            print(f"{type(e).__name__}: {e}", file=file)
+            print(f"{type(e).__name__}: {message}", file=file)
         raise SystemExit(1)
 
 

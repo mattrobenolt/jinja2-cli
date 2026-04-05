@@ -1,4 +1,5 @@
 import os
+import sys
 
 import pytest
 
@@ -25,6 +26,24 @@ def test_absolute_path():
     output = cli.render(path, {"title": title}, [])
     assert output == title
     assert isinstance(output, str)
+
+
+def test_main_prints_template_syntax_error_location(tmp_path, monkeypatch, capsys):
+    template = tmp_path / "broken.j2"
+    template.write_text("{{ foo }")
+    data = tmp_path / "data.json"
+    data.write_text("{}")
+
+    monkeypatch.setattr(sys, "argv", ["jinja2", str(template), str(data)])
+    monkeypatch.setattr(cli, "can_colorize", lambda file: False)
+
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main()
+
+    assert exc_info.value.code == 1
+    assert capsys.readouterr().err == (
+        f"TemplateSyntaxError: unexpected '}}' ({template}:1)\n"
+    )
 
 
 class TestDiscoverFilters:
