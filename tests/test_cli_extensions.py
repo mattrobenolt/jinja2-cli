@@ -4,13 +4,20 @@ import sys
 from pathlib import Path
 
 
-def _run_cli(args, cwd):
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _pythonpath_env():
     env = os.environ.copy()
-    repo_root = Path(__file__).resolve().parents[1]
-    pythonpath = [str(repo_root)]
+    pythonpath = [str(REPO_ROOT)]
     if env.get("PYTHONPATH"):
         pythonpath.append(env["PYTHONPATH"])
     env["PYTHONPATH"] = os.pathsep.join(pythonpath)
+    return env
+
+
+def _run_cli(args, cwd):
+    env = _pythonpath_env()
     return subprocess.run(
         [sys.executable, "-m", "jinja2cli.cli", *args],
         cwd=cwd,
@@ -54,3 +61,21 @@ def test_local_extension_from_cwd(tmp_path):
     )
 
     assert result.stdout == "MATT"
+
+
+def test_python_dash_m_jinja2cli(tmp_path):
+    template = tmp_path / "template.j2"
+    template.write_text("{{ name }}", encoding="utf8")
+    data = tmp_path / "data.json"
+    data.write_text('{"name": "matt"}', encoding="utf8")
+
+    result = subprocess.run(
+        [sys.executable, "-m", "jinja2cli", str(template), str(data), "--format", "json"],
+        cwd=tmp_path,
+        env=_pythonpath_env(),
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.stdout == "matt"
