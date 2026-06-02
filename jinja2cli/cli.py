@@ -16,6 +16,16 @@ from collections.abc import Iterable, Iterator, Sequence
 from types import ModuleType
 from typing import IO, Any, Callable, Tuple, Type, Union
 
+import jinja2 as _jinja2
+
+# Discover available Undefined classes from jinja2 at import time.
+# Excludes UndefinedError (an exception, not an Undefined class).
+UNDEFINED_CLASSES: dict[str, Type[Any]] = {
+    name: getattr(_jinja2, name)
+    for name in dir(_jinja2)
+    if name.endswith("Undefined") and name != "UndefinedError"
+}
+
 
 class InvalidDataFormat(Exception):
     pass
@@ -328,6 +338,7 @@ def render(
     extensions: list[ExtensionSpec],
     filters: list[str] | None = None,
     strict: bool = False,
+    undefined: str | None = None,
     trim_blocks: bool = False,
     lstrip_blocks: bool = False,
     autoescape: bool = False,
@@ -347,7 +358,6 @@ def render(
     from jinja2 import (
         Environment,
         FileSystemLoader,
-        StrictUndefined,
         UndefinedError,
     )
 
@@ -387,7 +397,9 @@ def render(
 
     env = Environment(**env_kwargs)
     if strict:
-        env.undefined = StrictUndefined
+        env.undefined = UNDEFINED_CLASSES["StrictUndefined"]
+    elif undefined is not None:
+        env.undefined = UNDEFINED_CLASSES[undefined]
 
     # Load custom filters
     if filters:
@@ -467,6 +479,11 @@ def resolve_extension(extension: ExtensionSpec, base_dir: str) -> ExtensionSpec:
 def cli(opts: argparse.Namespace, args: Sequence[str]) -> int:
     template_string: str | None = None
     template_path: str | None = None
+
+    if opts.strict and opts.undefined is not None:
+        raise InvalidUsage(
+            "cannot use --strict and --undefined together; use --undefined=StrictUndefined instead"
+        )
 
     if opts.stream:
         # Stream mode: read template from stdin, all args are data files
@@ -567,6 +584,7 @@ def cli(opts: argparse.Namespace, args: Sequence[str]) -> int:
         extensions,
         filters=opts.filters,
         strict=opts.strict,
+        undefined=opts.undefined,
         trim_blocks=opts.trim_blocks,
         lstrip_blocks=opts.lstrip_blocks,
         autoescape=opts.autoescape,
@@ -710,6 +728,17 @@ def run() -> int:
         help="Disallow undefined variables to be used within the template",
         dest="strict",
         action="store_true",
+    )
+    parser.add_argument(
+        "--undefined",
+        help=(
+            "Undefined class to use for variables not found in the context. "
+            "Choices: " + ", ".join(sorted(UNDEFINED_CLASSES))
+        ),
+        dest="undefined",
+        choices=sorted(UNDEFINED_CLASSES),
+        default=None,
+        metavar="UNDEFINED",
     )
     parser.add_argument(
         "-o",

@@ -259,3 +259,79 @@ class TestParseKvString:
         """Test adding to existing nested path"""
         result = cli.parse_kv_string(["foo.bar=1", "foo.baz=2"])
         assert result == {"foo": {"bar": "1", "baz": "2"}}
+
+
+class TestUndefinedOption:
+    """Tests for the --undefined option and render() undefined parameter."""
+
+    def test_default_undefined_raises_on_chained_access(self, tmp_path):
+        """Default Undefined raises UndefinedError on chained attribute access."""
+        from jinja2 import UndefinedError
+
+        template = tmp_path / "t.j2"
+        template.write_text("{{ foo.bar }}")
+        with pytest.raises(UndefinedError):
+            cli.render(str(template), {}, [])
+
+    def test_chainable_undefined_allows_chained_access(self, tmp_path):
+        """ChainableUndefined returns empty string for chained attribute access."""
+        template = tmp_path / "t.j2"
+        template.write_text("{{ foo.bar }}")
+        output = cli.render(str(template), {}, [], undefined="ChainableUndefined")
+        assert output == ""
+
+    def test_chainable_undefined_with_default_filter(self, tmp_path):
+        """ChainableUndefined works with the default filter on chained access."""
+        template = tmp_path / "t.j2"
+        template.write_text("{{ foo.bar | default('fallback') }}")
+        output = cli.render(str(template), {}, [], undefined="ChainableUndefined")
+        assert output == "fallback"
+
+    def test_strict_undefined_raises(self, tmp_path):
+        """strict=True (StrictUndefined) raises UndefinedError."""
+        from jinja2 import UndefinedError
+
+        template = tmp_path / "t.j2"
+        template.write_text("{{ foo }}")
+        with pytest.raises(UndefinedError):
+            cli.render(str(template), {}, [], strict=True)
+
+    def test_undefined_strict_class_raises(self, tmp_path):
+        """undefined='StrictUndefined' raises UndefinedError."""
+        from jinja2 import UndefinedError
+
+        template = tmp_path / "t.j2"
+        template.write_text("{{ foo }}")
+        with pytest.raises(UndefinedError):
+            cli.render(str(template), {}, [], undefined="StrictUndefined")
+
+    def test_debug_undefined(self, tmp_path):
+        """DebugUndefined renders a debug string instead of raising."""
+        template = tmp_path / "t.j2"
+        template.write_text("{{ foo }}")
+        output = cli.render(str(template), {}, [], undefined="DebugUndefined")
+        assert "foo" in output
+
+    def test_strict_and_undefined_conflict_raises(self, tmp_path, monkeypatch):
+        """Using both --strict and --undefined raises InvalidUsage."""
+        template = tmp_path / "t.j2"
+        template.write_text("{{ foo }}")
+        data = tmp_path / "data.json"
+        data.write_text("{}")
+
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            ["jinja2", "--strict", "--undefined=ChainableUndefined", str(template), str(data)],
+        )
+        with pytest.raises(SystemExit) as exc_info:
+            cli.main()
+        assert exc_info.value.code == 1
+
+    def test_undefined_classes_dict_contains_expected_classes(self):
+        """UNDEFINED_CLASSES contains the standard Jinja2 Undefined classes."""
+        assert "Undefined" in cli.UNDEFINED_CLASSES
+        assert "ChainableUndefined" in cli.UNDEFINED_CLASSES
+        assert "DebugUndefined" in cli.UNDEFINED_CLASSES
+        assert "StrictUndefined" in cli.UNDEFINED_CLASSES
+        assert "UndefinedError" not in cli.UNDEFINED_CLASSES
