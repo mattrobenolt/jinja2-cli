@@ -553,11 +553,12 @@ def cli(opts: argparse.Namespace, args: Sequence[str]) -> int:
 
     # Use only a specific section if needed
     if opts.section:
-        section = opts.section
-        if section in data:
-            data = data[section]
-        else:
-            raise InvalidUsage(f"unknown section: {section}")
+        section_set = set(opts.section)
+        data = {k: v for k, v in data.items() if k in section_set}
+        data_keys = set(data.keys())
+        if data_keys != section_set:
+            missing = section_set - data_keys
+            raise InvalidUsage(f"unknown sections: {', '.join(missing)}" if (len(missing) > 1) else f"unknown section: {''.join(missing)}")
 
     deep_merge(data, parse_kv_string(opts.D or []))
 
@@ -702,8 +703,9 @@ def run() -> int:
     parser.add_argument(
         "-s",
         "--section",
-        help="Use only this section from the configuration",
+        help="Use only this section from the configuration. Can be used multiple times.",
         dest="section",
+        action="append",
     )
     parser.add_argument(
         "--strict",
