@@ -3,7 +3,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -31,16 +30,12 @@ def _run_cli(args, cwd):
 def test_local_extension_from_cwd(tmp_path):
     extension = tmp_path / "myext.py"
     extension.write_text(
-        "\n".join(
-            [
-                "from jinja2.ext import Extension",
-                "",
-                "class ShoutExtension(Extension):",
-                "    def __init__(self, environment):",
-                "        super().__init__(environment)",
-                "        environment.filters['shout'] = lambda value: str(value).upper()",
-            ]
-        ),
+        """from jinja2.ext import Extension
+
+class ShoutExtension(Extension):
+    def __init__(self, environment):
+        super().__init__(environment)
+        environment.filters['shout'] = lambda value: str(value).upper()""",
         encoding="utf8",
     )
     template = tmp_path / "template.j2"

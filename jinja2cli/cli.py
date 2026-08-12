@@ -86,7 +86,7 @@ def has_format(fmt: str) -> bool:
 
 
 def get_available_formats() -> Iterator[str]:
-    for fmt in formats.keys():
+    for fmt in formats:
         if has_format(fmt):
             yield fmt
     yield "auto"
@@ -138,9 +138,9 @@ def load_querystring() -> FormatLoadResult:
         >>> _parse_qs('user.first_name=Matt&user.last_name=Robenolt')
         {'user': {'first_name': 'Matt', 'last_name': 'Robenolt'}}
         """
-        dict_ = {}
+        dict_: dict[str, Any] = {}
         for k, v in parse_qs(data).items():
-            v = list(map(lambda x: x.strip(), v))
+            v = [x.strip() for x in v]
             v = v[0] if len(v) == 1 else v
             if "." in k:
                 pieces = k.split(".")
@@ -160,9 +160,9 @@ def load_querystring() -> FormatLoadResult:
 
 def load_toml() -> FormatLoadResult:
     try:
-        import tomllib  # type: ignore[unresolved-import]
+        import tomllib  # ty: ignore[unresolved-import]
     except ModuleNotFoundError:
-        import tomli as tomllib  # type: ignore[unresolved-import]
+        import tomli as tomllib  # ty: ignore[unresolved-import]
 
     return tomllib.loads, Exception, MalformedToml
 
@@ -403,8 +403,8 @@ def render(
             raise UndefinedError(f"environment variable '{key}' is not defined")
         return value
 
-    env.globals["environ"] = _environ
-    env.globals["get_context"] = lambda: data
+    env.globals["environ"] = _environ  # ty: ignore[invalid-assignment] - jinja2's globals dict is unannotated
+    env.globals["get_context"] = lambda: data  # ty: ignore[invalid-assignment] - jinja2's globals dict is unannotated
 
     if template_string is not None:
         return env.from_string(template_string).render(data)
@@ -584,12 +584,11 @@ def cli(opts: argparse.Namespace, args: Sequence[str]) -> int:
     )
 
     if opts.outfile is None:
-        out = sys.stdout
+        sys.stdout.write(rendered)
+        sys.stdout.flush()
     else:
-        out = open(opts.outfile, "w")
-
-    out.write(rendered)
-    out.flush()
+        with open(opts.outfile, "w") as out:
+            out.write(rendered)
     return 0
 
 
@@ -603,7 +602,7 @@ def deep_merge(target: dict, source: dict) -> dict:
 
 
 def parse_kv_string(pairs: Iterable[str]) -> dict:
-    dict_ = {}
+    dict_: dict[str, Any] = {}
     for pair in pairs:
         try:
             k, v = pair.split("=", 1)
@@ -632,7 +631,7 @@ class ArgumentParser(argparse.ArgumentParser):
         help_text = super().format_help()
         help_text = help_text.replace(
             FORMAT_HELP_SENTINEL,
-            "format of input variables: " + ", ".join(sorted(list(get_available_formats()))),
+            "format of input variables: " + ", ".join(sorted(get_available_formats())),
         )
         return help_text
 
@@ -816,7 +815,7 @@ def can_colorize(*, file: IO[str] | IO[bytes] | None = None) -> bool:
         """Exception-safe environment retrieval. See gh-128636."""
         try:
             return os.environ.get(k, fallback)
-        except Exception:
+        except Exception:  # noqa: BLE001 - must never raise; see gh-128636
             return fallback
 
     if file is None:
@@ -871,7 +870,7 @@ def main() -> None:
         raise SystemExit(run())
     except KeyboardInterrupt:
         raise SystemExit(130)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - top-level handler renders any error nicely
         file = sys.stderr
         message = format_exception_message(e)
         if can_colorize(file=file):
