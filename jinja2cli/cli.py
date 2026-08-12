@@ -553,13 +553,22 @@ def cli(opts: argparse.Namespace, args: Sequence[str]) -> int:
             ext = f"jinja2.ext.{ext}"
         extensions.append(resolve_extension(ext, os.getcwd()))
 
-    # Use only a specific section if needed
-    if opts.section:
-        section = opts.section
+    # Use specified sections if needed
+    if len(opts.section) == 1:
+        section = opts.section[0]
         if section in data:
             data = data[section]
         else:
             raise InvalidUsage(f"unknown section: {section}")
+    elif len(opts.section) > 1:
+        # for multiple values, all must be iterables
+        merged_data = {}
+        for k, v in data.items():
+            if k in opts.section:
+                if not isinstance(v, Iterable):
+                    raise InvalidUsage(f"invalid section: {k}: must be iterable")
+                merged_data.update(v)
+        data = merged_data
 
     deep_merge(data, parse_kv_string(opts.D or []))
 
@@ -703,8 +712,9 @@ def run() -> int:
     parser.add_argument(
         "-s",
         "--section",
-        help="Use only this section from the configuration",
+        help="Use only this section from the configuration. Can be used multiple times.",
         dest="section",
+        action="append",
     )
     parser.add_argument(
         "--strict",
