@@ -159,10 +159,12 @@ def load_querystring() -> FormatLoadResult:
 
 
 def load_toml() -> FormatLoadResult:
-    try:
-        import tomllib  # ty: ignore[unresolved-import]
-    except ModuleNotFoundError:
-        import tomli as tomllib  # ty: ignore[unresolved-import]
+    from importlib import import_module
+
+    if sys.version_info >= (3, 11):
+        tomllib = import_module("tomllib")
+    else:
+        tomllib = import_module("tomli")
 
     return tomllib.loads, Exception, MalformedToml
 

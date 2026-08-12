@@ -5,7 +5,7 @@ from jinja2cli import cli
 
 def _get_parser(fmt):
     if not cli.has_format(fmt):
-        pytest.skip(f"{fmt} format not available")
+        raise pytest.skip.Exception(f"{fmt} format not available")
     parser, _, _ = cli.get_format(fmt)
     return parser
 
