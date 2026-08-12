@@ -39,6 +39,12 @@ lint:
     uv run ruff check
     uv run ty check
 
+[doc('Lint GitHub Actions workflows')]
+[group('test')]
+lint-ci:
+    pinact run --check --verify
+    zizmor .github/workflows/
+
 [doc('Benchmark startup time')]
 [group('bench')]
 bench-startup:

@@ -44,6 +44,8 @@
               shellcheck
               uvShellHook
               hadolint
+              pinact
+              zizmor
             ];
           };
         };

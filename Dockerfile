@@ -1,5 +1,5 @@
 FROM cgr.dev/chainguard/wolfi-base:latest AS build
-COPY --from=ghcr.io/astral-sh/uv:0.9 /uv /bin
+COPY --from=ghcr.io/astral-sh/uv:0.12 /uv /bin
 
 USER nonroot
 
