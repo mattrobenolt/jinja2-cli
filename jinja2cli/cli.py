@@ -11,6 +11,7 @@ import argparse
 import importlib
 import importlib.util
 import os
+import re
 import sys
 from collections.abc import Iterable, Iterator, Sequence
 from types import ModuleType
@@ -177,6 +178,15 @@ def load_xml() -> FormatLoadResult:
     return xmltodict.parse, expat.ExpatError, MalformedXML
 
 
+def _protect_env_backslashes(match: re.Match) -> str:
+    backslashes = match[0]
+    following = match.string[match.end() : match.end() + 1]
+    # An unpaired backslash before literal Unicode must remain literal too.
+    if len(backslashes) % 2 and following and not following.isascii():
+        backslashes += "\\"
+    return backslashes
+
+
 def parse_env(data: str) -> dict:
     """
     Parse an envfile format of key=value pairs that are newline separated.
@@ -198,7 +208,10 @@ def parse_env(data: str) -> dict:
                 v = v[1:-1]
                 # Decode escape sequences for double-quoted values
                 if quote == '"':
-                    v = v.encode().decode("unicode-escape")
+                    # Escape literal Unicode, then decode the whole value once so
+                    # malformed escapes retain precedence over escape warnings.
+                    v = re.sub(r"\\+", _protect_env_backslashes, v)
+                    v = v.encode("ascii", "backslashreplace").decode("unicode-escape")
 
         dict_[k] = v
     return dict_
