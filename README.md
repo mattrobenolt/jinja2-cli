@@ -71,5 +71,5 @@ See [docs/filters.md](docs/filters.md) for complete documentation and examples.
 [![Alpine](https://img.shields.io/badge/Alpine-jinja2--cli-0D597F?logo=alpinelinux&logoColor=fff)](https://pkgs.alpinelinux.org/package/edge/community/x86_64/jinja2-cli)
 
 ## Learn more
+- [Read the docs](docs/)
 - [Jinja2 as a Command Line Application](https://thejeshgn.com/2021/12/07/jinja2-command-line-application/)
-- [Combining jinja2-cli with jq and environment variables](https://www.zufallsheld.de/2025/06/30/templating-jinja-cli)

@@ -59,7 +59,23 @@ Access environment variables:
 ```
 
 Returns `None` if the variable is not set. With `--strict`, raises an error
-for missing variables.
+for missing variables. If you really don't want to use `environ` you can use the
+`env` format and pipe your environment in:
+
+```
+env | jinja2 -f env my-template-without-environ.j2
+```
+
+Or to be safer, just the variables you need from your environment:
+
+```
+cat <<EOF | jinja2 -f env my-template-without-environ.j2
+HOME=${HOME}
+USER=${USER}
+EOF
+```
+
+Or you could even [use j2 to create a JSON variables file from your environment](https://www.zufallsheld.de/2025/06/30/templating-jinja-cli).
 
 ### `get_context()`
 Access the root data context. Useful for iterating over all input data:
