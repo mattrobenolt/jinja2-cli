@@ -10,6 +10,18 @@ environ_dir="${fixtures_dir}/environ"
 filters_dir="${fixtures_dir}/filters"
 dot_notation_dir="${fixtures_dir}/dot_notation"
 
+setup_file() {
+    JINJA2="${VIRTUAL_ENV:-}/bin/jinja2"
+
+    if [[ ! -x "$JINJA2" ]]; then
+        echo "jinja2 executable not found: $JINJA2" >&2
+        return 1
+    fi
+
+    export JINJA2
+}
+
+
 setup() {
     bats_load_library bats-support
     bats_load_library bats-assert
@@ -18,10 +30,8 @@ setup() {
     bats_require_minimum_version 1.12.0
 
     TEST_TEMP_DIR="$(temp_make)"
-
-    # Use the venv jinja2 directly instead of uv run
-    JINJA2="${BATS_TEST_DIRNAME}/../../.venv/bin/jinja2"
 }
+
 
 teardown() {
     temp_del "$TEST_TEMP_DIR"
