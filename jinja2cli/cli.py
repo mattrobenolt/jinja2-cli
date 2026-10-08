@@ -653,164 +653,6 @@ class VersionAction(argparse.Action):
         parser.exit(message=f"jinja2-cli v{__version__}\n - Jinja2 v{jinja_version}\n")
 
 
-def run() -> int:
-    parser = ArgumentParser(usage="%(prog)s [options] <input template> <input data>")
-    parser.add_argument(
-        "--version",
-        action=VersionAction,
-        nargs=0,
-        help="show program's version number and exit",
-    )
-    parser.add_argument(
-        "-f",
-        "--format",
-        help=FORMAT_HELP_SENTINEL,
-        dest="format",
-        default="auto",
-    )
-    parser.add_argument(
-        "-e",
-        "--extension",
-        help="extra jinja2 extensions to load",
-        dest="extensions",
-        action="append",
-        default=["do", "loopcontrols"],
-    )
-    parser.add_argument(
-        "-F",
-        "--filter",
-        help="extra jinja2 filters to load (e.g., mymodule.myfilter)",
-        dest="filters",
-        action="append",
-        default=[],
-    )
-    parser.add_argument(
-        "-D",
-        dest="D",
-        help="Define template variable in the form of key=value",
-        action="append",
-        metavar="key=value",
-    )
-    parser.add_argument(
-        "-I",
-        "--include",
-        help="Add directory to template search path",
-        dest="search_paths",
-        action="append",
-        default=[],
-        metavar="DIR",
-    )
-    parser.add_argument(
-        "-s",
-        "--section",
-        help="Use only this section from the configuration",
-        dest="section",
-    )
-    parser.add_argument(
-        "--strict",
-        help="Disallow undefined variables to be used within the template",
-        dest="strict",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-o",
-        "--outfile",
-        help="File to use for output. Default is stdout.",
-        dest="outfile",
-        metavar="FILE",
-    )
-    parser.add_argument(
-        "--trim-blocks",
-        help="Trim first newline after a block",
-        dest="trim_blocks",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--lstrip-blocks",
-        help="Strip leading spaces and tabs from block start",
-        dest="lstrip_blocks",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--autoescape",
-        help="Enable autoescape",
-        dest="autoescape",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--variable-start",
-        help="Variable start string",
-        dest="variable_start",
-    )
-    parser.add_argument(
-        "--variable-end",
-        help="Variable end string",
-        dest="variable_end",
-    )
-    parser.add_argument(
-        "--block-start",
-        help="Block start string",
-        dest="block_start",
-    )
-    parser.add_argument(
-        "--block-end",
-        help="Block end string",
-        dest="block_end",
-    )
-    parser.add_argument(
-        "--comment-start",
-        help="Comment start string",
-        dest="comment_start",
-    )
-    parser.add_argument(
-        "--comment-end",
-        help="Comment end string",
-        dest="comment_end",
-    )
-    parser.add_argument(
-        "--line-statement-prefix",
-        help="Line statement prefix",
-        dest="line_statement_prefix",
-    )
-    parser.add_argument(
-        "--line-comment-prefix",
-        help="Line comment prefix",
-        dest="line_comment_prefix",
-    )
-    parser.add_argument(
-        "--newline-sequence",
-        help=r'Newline sequence (e.g., "\n" or "\r\n")',
-        dest="newline_sequence",
-    )
-    parser.add_argument(
-        "-S",
-        "--stream",
-        help="Read template from stdin (no template file argument)",
-        action="store_true",
-        dest="stream",
-    )
-    parser.add_argument("template", nargs="?", help=argparse.SUPPRESS)
-    parser.add_argument("data", nargs="*", help=argparse.SUPPRESS)
-    opts = parser.parse_args()
-    args = [opts.template] + list(opts.data) if opts.template else []
-
-    opts.extensions = set(opts.extensions)
-
-    if not opts.stream:
-        if len(args) == 0:
-            parser.print_help()
-            return 1
-
-        # Without the second argv, assume they maybe want to read from stdin
-        if len(args) == 1:
-            args.append("")
-
-        if opts.format not in formats and opts.format != "auto":
-            raise InvalidDataFormat(opts.format)
-
-    return cli(opts, args)
-
-
 # borrowed from https://github.com/python/cpython/blob/3.14/Lib/_colorize.py#L274
 def can_colorize(*, file: IO[str] | IO[bytes] | None = None) -> bool:
     def _safe_getenv(k: str, fallback: str | None = None) -> str | None:
@@ -867,15 +709,178 @@ def format_exception_message(exc: Exception) -> str:
     return details
 
 
-def main() -> None:
+def main() -> int:
     try:
-        raise SystemExit(run())
+        parser = ArgumentParser(usage="%(prog)s [options] <input template> <input data>")
+        parser.add_argument(
+            "--version",
+            action=VersionAction,
+            nargs=0,
+            help="show program's version number and exit",
+        )
+        parser.add_argument(
+            "-f",
+            "--format",
+            help=FORMAT_HELP_SENTINEL,
+            dest="format",
+            default="auto",
+        )
+        parser.add_argument(
+            "-e",
+            "--extension",
+            help="extra jinja2 extensions to load",
+            dest="extensions",
+            action="append",
+            default=["do", "loopcontrols"],
+        )
+        parser.add_argument(
+            "-F",
+            "--filter",
+            help="extra jinja2 filters to load (e.g., mymodule.myfilter)",
+            dest="filters",
+            action="append",
+            default=[],
+        )
+        parser.add_argument(
+            "-D",
+            dest="D",
+            help="Define template variable in the form of key=value",
+            action="append",
+            metavar="key=value",
+        )
+        parser.add_argument(
+            "-I",
+            "--include",
+            help="Add directory to template search path",
+            dest="search_paths",
+            action="append",
+            default=[],
+            metavar="DIR",
+        )
+        parser.add_argument(
+            "-s",
+            "--section",
+            help="Use only this section from the configuration",
+            dest="section",
+        )
+        parser.add_argument(
+            "--strict",
+            help="Disallow undefined variables to be used within the template",
+            dest="strict",
+            action="store_true",
+        )
+        parser.add_argument(
+            "-o",
+            "--outfile",
+            help="File to use for output. Default is stdout.",
+            dest="outfile",
+            metavar="FILE",
+        )
+        parser.add_argument(
+            "--trim-blocks",
+            help="Trim first newline after a block",
+            dest="trim_blocks",
+            action="store_true",
+        )
+        parser.add_argument(
+            "--lstrip-blocks",
+            help="Strip leading spaces and tabs from block start",
+            dest="lstrip_blocks",
+            action="store_true",
+        )
+        parser.add_argument(
+            "--autoescape",
+            help="Enable autoescape",
+            dest="autoescape",
+            action="store_true",
+        )
+        parser.add_argument(
+            "--variable-start",
+            help="Variable start string",
+            dest="variable_start",
+        )
+        parser.add_argument(
+            "--variable-end",
+            help="Variable end string",
+            dest="variable_end",
+        )
+        parser.add_argument(
+            "--block-start",
+            help="Block start string",
+            dest="block_start",
+        )
+        parser.add_argument(
+            "--block-end",
+            help="Block end string",
+            dest="block_end",
+        )
+        parser.add_argument(
+            "--comment-start",
+            help="Comment start string",
+            dest="comment_start",
+        )
+        parser.add_argument(
+            "--comment-end",
+            help="Comment end string",
+            dest="comment_end",
+        )
+        parser.add_argument(
+            "--line-statement-prefix",
+            help="Line statement prefix",
+            dest="line_statement_prefix",
+        )
+        parser.add_argument(
+            "--line-comment-prefix",
+            help="Line comment prefix",
+            dest="line_comment_prefix",
+        )
+        parser.add_argument(
+            "--newline-sequence",
+            help=r'Newline sequence (e.g., "\n" or "\r\n")',
+            dest="newline_sequence",
+        )
+        parser.add_argument(
+            "-S",
+            "--stream",
+            help="Read template from stdin (no template file argument)",
+            action="store_true",
+            dest="stream",
+        )
+        parser.add_argument(
+            "-v",
+            "--verbose",
+            help="Report errors verbosely",
+            action="store_true",
+            dest="verbose",
+        )
+        parser.add_argument("template", nargs="?", help=argparse.SUPPRESS)
+        parser.add_argument("data", nargs="*", help=argparse.SUPPRESS)
+        opts = parser.parse_args()
+        args = [opts.template] + list(opts.data) if opts.template else []
+
+        opts.extensions = set(opts.extensions)
+
+        if not opts.stream:
+            if len(args) == 0:
+                parser.print_help()
+                return 1
+
+            # Without the second argv, assume they maybe want to read from stdin
+            if len(args) == 1:
+                args.append("")
+
+            if opts.format not in formats and opts.format != "auto":
+                raise InvalidDataFormat(opts.format)
+
+        return SystemExit(cli(opts, args))
     except KeyboardInterrupt:
         raise SystemExit(130)
     except Exception as e:  # noqa: BLE001 - top-level handler renders any error nicely
         file = sys.stderr
         message = format_exception_message(e)
-        if can_colorize(file=file):
+        if opts and opts.verbose:
+            raise (e)
+        elif can_colorize(file=file):
             print(f"\x1b[1;35m{type(e).__name__}\x1b[0m: \x1b[35m{message}\x1b[0m", file=file)
         else:
             print(f"{type(e).__name__}: {message}", file=file)
