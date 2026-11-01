@@ -15,6 +15,7 @@ options:
   -s, --section SECTION
                         Use only this section from the configuration
   --strict              Disallow undefined variables to be used within the template
+  --check               Parse the template for syntax errors without rendering it
   -o, --outfile FILE    File to use for output. Default is stdout.
   --trim-blocks         Trim first newline after a block
   --lstrip-blocks       Strip leading spaces and tabs from block start
