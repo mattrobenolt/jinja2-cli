@@ -345,6 +345,7 @@ def render(
     search_paths: list[str] | None = None,
     template_string: str | None = None,
     base_dir: str | None = None,
+    check: bool = False,
 ) -> str:
     from jinja2 import (
         Environment,
@@ -408,6 +409,13 @@ def render(
     env.globals["environ"] = _environ  # ty: ignore[invalid-assignment] - jinja2's globals dict is unannotated
     env.globals["get_context"] = lambda: data  # ty: ignore[invalid-assignment] - jinja2's globals dict is unannotated
 
+    if check:
+        if template_string is None:
+            assert template_path is not None
+            with open(template_path) as fp:
+                template_string = fp.read()
+        env.parse(template_string, filename=template_path)
+        return ""
     if template_string is not None:
         return env.from_string(template_string).render(data)
     assert template_path is not None
@@ -483,7 +491,9 @@ def cli(opts: argparse.Namespace, args: Sequence[str]) -> int:
     data: dict = {}
 
     # Determine if we're reading from stdin or files
-    if not data_files:
+    if opts.check:
+        data_files = []
+    elif not data_files:
         # No data files specified
         if opts.stream:
             # In stream mode, stdin is used for template, so no data
@@ -583,8 +593,11 @@ def cli(opts: argparse.Namespace, args: Sequence[str]) -> int:
         newline_sequence=opts.newline_sequence,
         search_paths=opts.search_paths,
         template_string=template_string,
+        check=opts.check,
     )
 
+    if opts.check:
+        return 0
     if opts.outfile is None:
         sys.stdout.write(rendered)
         sys.stdout.flush()
@@ -710,6 +723,12 @@ def run() -> int:
         "--strict",
         help="Disallow undefined variables to be used within the template",
         dest="strict",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--check",
+        help="Parse the template for syntax errors without rendering it",
+        dest="check",
         action="store_true",
     )
     parser.add_argument(
