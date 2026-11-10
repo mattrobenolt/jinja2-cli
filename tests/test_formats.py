@@ -79,3 +79,13 @@ def test_hjson_format():
 def test_json5_format():
     parser = _get_parser("json5")
     assert parser("{foo: 'bar',}") == {"foo": "bar"}
+
+
+def test_env_format_with_unicode_double_quoted():
+    parser = _get_parser("env")
+    assert parser('GREETING="h\xe9llo w\xf6rld"\n') == {"GREETING": "h\xe9llo w\xf6rld"}
+
+
+def test_env_format_with_unicode_and_escapes():
+    parser = _get_parser("env")
+    assert parser('FOO="h\xe9llo\\nworld"\n') == {"FOO": "h\xe9llo\nworld"}

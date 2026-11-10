@@ -11,6 +11,7 @@ import argparse
 import importlib
 import importlib.util
 import os
+import re
 import sys
 from collections.abc import Iterable, Iterator, Sequence
 from types import ModuleType
@@ -177,6 +178,45 @@ def load_xml() -> FormatLoadResult:
     return xmltodict.parse, expat.ExpatError, MalformedXML
 
 
+_SIMPLE_ENV_ESCAPES = {
+    "\\": "\\",
+    "'": "'",
+    '"': '"',
+    "a": "\a",
+    "b": "\b",
+    "f": "\f",
+    "n": "\n",
+    "r": "\r",
+    "t": "\t",
+    "v": "\v",
+    "0": "\0",
+}
+
+_ENV_ESCAPE_RE = re.compile(
+    r"\\(?:(?P<hex>x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8}|[0-7]{1,3})|(?P<char>[^\n]))"
+)
+
+
+def _decode_env_escapes(value: str) -> str:
+    """Decode backslash escape sequences while preserving non-ASCII text.
+
+    Unlike ``value.encode().decode("unicode-escape")``, this only interprets
+    recognized escape sequences and leaves all other characters untouched.
+    """
+
+    def _replace(match: re.Match[str]) -> str:
+        hex_seq = match.group("hex")
+        if hex_seq is not None:
+            try:
+                return ("\\" + hex_seq).encode("ascii").decode("unicode-escape")
+            except (UnicodeDecodeError, ValueError):
+                return match.group(0)
+        char = match.group("char")
+        return _SIMPLE_ENV_ESCAPES.get(char, match.group(0))
+
+    return _ENV_ESCAPE_RE.sub(_replace, value)
+
+
 def parse_env(data: str) -> dict:
     """
     Parse an envfile format of key=value pairs that are newline separated.
@@ -198,7 +238,7 @@ def parse_env(data: str) -> dict:
                 v = v[1:-1]
                 # Decode escape sequences for double-quoted values
                 if quote == '"':
-                    v = v.encode().decode("unicode-escape")
+                    v = _decode_env_escapes(v)
 
         dict_[k] = v
     return dict_
